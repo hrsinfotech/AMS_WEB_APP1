@@ -1,21 +1,35 @@
 services:
+
   postgres:
-    image: postgres:16
-    container_name: hrs-tech-postgres
+    image: postgres:16-alpine
+    container_name: hrs-ams-postgres
     restart: unless-stopped
+
     environment:
       POSTGRES_DB: hrs_tech
       POSTGRES_USER: hrs
       POSTGRES_PASSWORD: hrs
+
     ports:
-      - "5432:5432"
+      - "5433:5432"
+
     volumes:
-      - hrs-tech-postgres-data:/var/lib/postgresql/data
+      - hrs_ams_postgres_data:/var/lib/postgresql/data
+
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hrs -d hrs_tech"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+    networks:
+      - hrs-ams-network
+
+
 volumes:
-  hrs-tech-postgres-data:
+  hrs_ams_postgres_data:
+
+
+networks:
+  hrs-ams-network:
+    driver: bridge
