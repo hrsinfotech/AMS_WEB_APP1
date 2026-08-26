@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: hrs-tech-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: hrs_tech
+      POSTGRES_USER: hrs
+      POSTGRES_PASSWORD: hrs
+    ports:
+      - "5432:5432"
+    volumes:
+      - hrs-tech-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hrs -d hrs_tech"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  hrs-tech-postgres-data:

@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "HRS Tech Security Dashboard"
+description = "A security and access operations dashboard for HRS Tech, modeled on the provided dark enterprise control-room references with user management and cross-cutting platform requirements views."
+version = "1.0.0"
+id = "artifacts/hrs-tech-dashboard"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24619
+
+[services.development]
+run = "pnpm --filter @workspace/hrs-tech-dashboard run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/hrs-tech-dashboard", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/hrs-tech-dashboard/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24619"
+BASE_PATH = "/"
