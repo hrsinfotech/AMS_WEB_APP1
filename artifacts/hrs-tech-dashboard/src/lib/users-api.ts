@@ -18,7 +18,7 @@ export type CreateUserInput = {
   type: "Employee" | "Contractor";
 };
 
-const apiUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:8080").replace(/\/$/, "");
+const apiUrl = (import.meta.env.VITE_API_URL ?? "http://localhost:8084").replace(/\/$/, "");
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {

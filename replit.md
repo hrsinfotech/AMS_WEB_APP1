@@ -4,8 +4,8 @@ Access, attendance, visitor, credential, and security operations dashboard with 
 
 ## Run & Operate
 
-- `docker compose up -d postgres` — start PostgreSQL (port 5432)
-- `mvn -f backend-java/pom.xml spring-boot:run` — run the Java API (port 8080)
+- `docker compose up -d` — start PostgreSQL (port 5433), the API (port 8084), and the web app (port 8085)
+- `mvn -f backend-java/pom.xml spring-boot:run` — run the Java API (port 8084)
 - `pnpm --filter @workspace/hrs-tech-dashboard run dev` — run the React frontend
 - `pnpm --filter @workspace/hrs-tech-dashboard run desktop:dev` — build and open the Windows/Electron shell
 - `pnpm run typecheck` — full typecheck across all packages
@@ -13,7 +13,7 @@ Access, attendance, visitor, credential, and security operations dashboard with 
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
 - Java API environment overrides: `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`, `PORT`
-- Frontend API override: `VITE_API_URL` (defaults to `http://localhost:8080` for browser and Electron)
+- Frontend API override: `VITE_API_URL` (defaults to `http://localhost:8084` for browser and Electron)
 
 ## Stack
 
@@ -28,7 +28,7 @@ Access, attendance, visitor, credential, and security operations dashboard with 
 
 - `backend-java/` — Java REST API and JPA model
 - `backend-java/src/main/resources/application.yml` — server and database configuration
-- `docker-compose.yml` — local PostgreSQL service
+- `docker-compose.yml` — PostgreSQL, API, and web services
 - `artifacts/hrs-tech-dashboard/src/lib/users-api.ts` — frontend API adapter
 - `artifacts/hrs-tech-dashboard/electron/` — Windows desktop shell
 
@@ -49,7 +49,7 @@ _Populate as you build — explicit user instructions worth remembering across s
 ## Gotchas
 
 - Start PostgreSQL before the Java API; the API will not start without a reachable database.
-- For Electron production builds, make the Java API reachable at `http://localhost:8080` or set `VITE_API_URL` before building.
+- For Electron production builds, make the Java API reachable at `http://localhost:8084` or set `VITE_API_URL` before building.
 
 ## Pointers
 

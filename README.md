@@ -24,8 +24,7 @@ git clone https://github.com/hrsinfotech/AMS_WEB_APP.git
 cd AMS_WEB_APP
 corepack enable
 pnpm install
-docker compose up -d postgres
-mvn -f backend-java/pom.xml spring-boot:run
+docker compose up -d
 ```
 
 In a second PowerShell window, start the React frontend:
@@ -34,7 +33,7 @@ In a second PowerShell window, start the React frontend:
 pnpm --filter @workspace/hrs-tech-dashboard run dev
 ```
 
-Open the dashboard at [http://localhost:5173](http://localhost:5173). The backend health check is available at [http://localhost:8080/api/healthz](http://localhost:8080/api/healthz).
+Open the dashboard at [http://localhost:8085](http://localhost:8085). The backend health check is available at [http://localhost:8084/api/healthz](http://localhost:8084/api/healthz).
 
 ## Desktop App on Windows
 
@@ -58,9 +57,9 @@ Copy `.env.example` to `.env` when custom values are needed. The defaults are su
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `VITE_API_URL` | `http://localhost:8080` | Java API URL used by React and Electron |
-| `PORT` | `8080` | Spring Boot HTTP port |
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/hrs_tech` | PostgreSQL JDBC URL |
+| `VITE_API_URL` | `http://localhost:8084` | Java API URL used by React and Electron |
+| `PORT` | `8084` | Spring Boot HTTP port |
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5433/hrs_tech` | PostgreSQL JDBC URL |
 | `SPRING_DATASOURCE_USERNAME` | `hrs` | PostgreSQL username |
 | `SPRING_DATASOURCE_PASSWORD` | `hrs` | PostgreSQL password |
 
@@ -68,7 +67,7 @@ Copy `.env.example` to `.env` when custom values are needed. The defaults are su
 
 - `backend-java/` - Spring Boot REST API, JPA entities, and PostgreSQL integration
 - `artifacts/hrs-tech-dashboard/` - React/Vite frontend and Electron desktop shell
-- `docker-compose.yml` - local PostgreSQL 16 service and persistent volume
+- `docker-compose.yml` - PostgreSQL, Spring Boot API, and web services
 - `artifacts/hrs-tech-dashboard/src/lib/users-api.ts` - frontend API adapter
 - `.env.example` - environment variable template
 
@@ -88,7 +87,7 @@ mvn -f backend-java/pom.xml -DskipTests package
 docker compose down
 ```
 
-The database must be running before starting the Java API. The React frontend keeps a local fallback directory when the API is unavailable, but changes are persisted only when the backend and PostgreSQL are running.
+The Compose stack exposes PostgreSQL on `5433`, the Java API on `8084`, and the web application on `8085`. The database must be healthy before the API starts. The React frontend keeps a local fallback directory when the API is unavailable, but changes are persisted only when the backend and PostgreSQL are running.
 
 ## Current Scope
 

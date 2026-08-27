@@ -12,10 +12,8 @@ services:
 
     ports:
       - "5433:5432"
-
     volumes:
       - hrs_ams_postgres_data:/var/lib/postgresql/data
-
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U hrs -d hrs_tech"]
       interval: 5s
@@ -25,10 +23,42 @@ services:
     networks:
       - hrs-ams-network
 
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: hrs-ams-api
+    restart: unless-stopped
+    environment:
+      PORT: 8084
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/hrs_tech
+      SPRING_DATASOURCE_USERNAME: hrs
+      SPRING_DATASOURCE_PASSWORD: hrs
+    ports:
+      - "8084:8084"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hrs-ams-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+      args:
+        VITE_API_URL: http://localhost:8084
+    container_name: hrs-ams-web
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    depends_on:
+      - api
+    networks:
+      - hrs-ams-network
 
 volumes:
   hrs_ams_postgres_data:
-
 
 networks:
   hrs-ams-network:
