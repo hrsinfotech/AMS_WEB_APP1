@@ -20,8 +20,8 @@ Docker Desktop is only required for the included local PostgreSQL setup. A separ
 Open PowerShell in the repository root:
 
 ```powershell
-git clone https://github.com/hrsinfotech/AMS_WEB_APP.git
-cd AMS_WEB_APP
+git clone https://github.com/hrsinfotech/AMS_WEB_APP1.git
+cd AMS_WEB_APP1
 corepack enable
 pnpm install
 docker compose up -d
