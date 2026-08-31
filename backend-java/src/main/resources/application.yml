@@ -1,9 +1,9 @@
 server:
-  port: ${PORT:8084}
+  port: ${PORT:8086}
 
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5433/hrs_tech}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5435/hrs_tech}
     username: ${SPRING_DATASOURCE_USERNAME:hrs}
     password: ${SPRING_DATASOURCE_PASSWORD:hrs}
 
