@@ -51,3 +51,12 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+
+# Capacitor Android
+artifacts/hrs-tech-dashboard/android/
+artifacts/hrs-tech-dashboard/ios/
+*.gradle
+.gradle/
+build/
+*.apk
+*.aab

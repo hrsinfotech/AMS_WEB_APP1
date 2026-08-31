@@ -1,19 +1,31 @@
 # HRS Tech Security Dashboard
 
-HRS Tech Security Dashboard is a React web and Electron desktop application for access control, attendance, visitor, credential, and security operations. The current migrated workflow is User Management, backed by a Spring Boot API and PostgreSQL.
+HRS Tech Security Dashboard is a cross-platform application for access control, attendance, visitor, credential, and security operations. Supports:
+- **Windows Desktop** - Electron-based native application
+- **Android Mobile** - Capacitor-based native app (Android 6+)
+- **Web Browser** - React/Vite web application
+
+The current migrated workflow is User Management, backed by a Spring Boot API and PostgreSQL.
 
 ## Prerequisites
 
-Install the following software before running the project on Windows:
-
+### For All Platforms (Windows, Android, Web)
 - **Git** 2.40 or newer
 - **Node.js** 20 LTS or newer
 - **pnpm** 10 or newer (`corepack enable`, then `corepack prepare pnpm@latest --activate`)
 - **Java JDK** 17 or newer (`java -version`)
 - **Apache Maven** 3.9 or newer (`mvn -version`)
-- **Docker Desktop** with Linux containers enabled, for PostgreSQL
+- **Docker Desktop** with Linux containers enabled, for PostgreSQL (optional - use external PostgreSQL 16+ instead if preferred)
 
-Docker Desktop is only required for the included local PostgreSQL setup. A separately installed PostgreSQL 16+ server can be used instead.
+### Additional Prerequisites for Android App
+- **Android SDK** (minimum API level 24, Android 6+)
+- **Gradle** 8.5 or newer (usually bundled with Android Studio)
+- **Android Studio** (recommended for building and testing)
+- **Capacitor CLI** (`npm install -g @capacitor/cli` or use `npx`)
+
+### Additional Prerequisites for Windows Desktop App
+- **Windows** 7 or newer
+- **Electron** and **electron-builder** (installed via `pnpm install`)
 
 ## Quick Start on Windows
 
@@ -35,7 +47,7 @@ pnpm --filter @workspace/hrs-tech-dashboard run dev
 
 Open the dashboard at [http://localhost:8087](http://localhost:8087). The backend health check is available at [http://localhost:8086/api/healthz](http://localhost:8086/api/healthz).
 
-## Desktop App on Windows
+## Windows Desktop App
 
 Build and open the Electron desktop shell after the backend and PostgreSQL are running:
 
@@ -43,13 +55,52 @@ Build and open the Electron desktop shell after the backend and PostgreSQL are r
 pnpm --filter @workspace/hrs-tech-dashboard run desktop:dev
 ```
 
-Create a Windows installer:
+Create a Windows installer (.exe):
 
 ```powershell
 pnpm --filter @workspace/hrs-tech-dashboard run build:windows
 ```
 
 The installer is created under `artifacts/hrs-tech-dashboard/release/`.
+
+## Android Mobile App
+
+### Prerequisites
+Ensure Android SDK and Android Studio are installed with the required API level (minimum 24).
+
+### Build for Android
+
+From the repository root:
+
+```powershell
+# Build the web assets
+pnpm --filter @workspace/hrs-tech-dashboard run build
+
+# Initialize and sync Capacitor (first time only)
+npx cap add android
+npx cap sync android
+
+# Open Android Studio (optional - for development/testing)
+npx cap open android
+```
+
+### Create Android APK
+
+```powershell
+# Build release APK
+pnpm --filter @workspace/hrs-tech-dashboard run build:android:apk
+```
+
+The APK file is generated in `artifacts/hrs-tech-dashboard/android/app/build/outputs/apk/release/`.
+
+### Install on Android Device
+
+1. Connect your Android device via USB (Developer Mode enabled)
+2. Allow USB debugging on the device
+3. Use Android Studio's device manager, or:
+   ```bash
+   adb install -r <path-to-apk>
+   ```
 
 ## Configuration
 
@@ -65,9 +116,9 @@ Copy `.env.example` to `.env` when custom values are needed. The defaults are su
 
 ## Project Structure
 
-- `backend-java/` - Spring Boot REST API, JPA entities, and PostgreSQL integration
-- `artifacts/hrs-tech-dashboard/` - React/Vite frontend and Electron desktop shell
-- `docker-compose.yml` - PostgreSQL, Spring Boot API, and web services
+- `backend-java/` - Spring Boot REST API (Java 25), JPA entities, and PostgreSQL integration
+- `artifacts/hrs-tech-dashboard/` - React/Vite frontend with Electron (Windows), Capacitor (Android), and web builds
+- `docker-compose.yml` - PostgreSQL 16, Spring Boot API, and web service containers
 - `artifacts/hrs-tech-dashboard/src/lib/users-api.ts` - frontend API adapter
 - `.env.example` - environment variable template
 
