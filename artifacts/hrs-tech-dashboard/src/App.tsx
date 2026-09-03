@@ -259,6 +259,222 @@ function Button({ children, onClick, kind = "secondary", icon: Icon, testId, dis
   return <button type={type} disabled={disabled} onClick={onClick} className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-[4px] px-3 text-[10px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${kind === "primary" ? "bg-[#12cdb7] text-[#062d31] hover:bg-[#27e2ca]" : kind === "danger" ? "border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15" : kind === "quiet" ? "text-slate-500 hover:bg-slate-800 hover:text-slate-200" : "border border-slate-700/90 bg-[#152235] text-slate-300 hover:border-slate-600 hover:bg-[#1a2b42]"}`} data-testid={testId}>{Icon && <Icon size={13} />} {children}</button>;
 }
 
+function CredentialIssueModal({ open, onClose, notify }: { open: boolean; onClose: () => void; notify: Notify }) {
+  const [activeTab, setActiveTab] = useState<"Summary" | "Cards" | "Biometrics" | "Dynamic QR" | "Mobile ID">("Summary");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardFormat, setCardFormat] = useState("MIFARE DESFire EV2");
+  const [issueDate, setIssueDate] = useState("08/23/2026");
+  const [expiryDate, setExpiryDate] = useState("08/23/2026");
+  const [neverExpires, setNeverExpires] = useState(false);
+  const [activateImmediately, setActivateImmediately] = useState(true);
+  const [biometricExempt, setBiometricExempt] = useState(true);
+  const [mobileIdExempt, setMobileIdExempt] = useState(false);
+  const [assignedUser, setAssignedUser] = useState("Ananya Rao");
+  const [credentialType, setCredentialType] = useState("Default");
+
+  if (!open) return null;
+
+  const tabOptions: Array<"Summary" | "Cards" | "Biometrics" | "Dynamic QR" | "Mobile ID"> = ["Summary", "Cards", "Biometrics", "Dynamic QR", "Mobile ID"];
+  const cardOptions = ["MIFARE DESFire EV2", "HID Prox", "LEGIC Prime", "NFC SmartCard"];
+  const credentialTypeOptions = ["Default", "Contractor", "Temporary"];
+
+  const renderTabContent = () => {
+    if (activeTab === "Summary") {
+      return (
+        <div className="space-y-4">
+          <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+            Assign to user
+            <select value={assignedUser} onChange={(event) => setAssignedUser(event.target.value)} className="mt-2 h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[12px] text-slate-100 outline-none focus:border-cyan-500/60">
+              <option>Ananya Rao</option>
+              <option>Daniel Osei</option>
+              <option>Marta Kowalski</option>
+              <option>Jonas Berg</option>
+            </select>
+          </label>
+
+          <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+            Credential type
+            <select value={credentialType} onChange={(event) => setCredentialType(event.target.value)} className="mt-2 h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[12px] text-slate-100 outline-none focus:border-cyan-500/60">
+              {credentialTypeOptions.map((option) => <option key={option}>{option}</option>)}
+            </select>
+          </label>
+
+          <div className="flex items-center justify-between rounded-[6px] bg-[#0f1d2d] px-3 py-2.5 text-[10px] text-slate-300">
+            <span>Biometric Exempt</span>
+            <button type="button" onClick={() => setBiometricExempt((value) => !value)} className={`relative h-6 w-11 rounded-full transition-colors ${biometricExempt ? "bg-[#12cdb7]" : "bg-slate-700"}`} aria-label="Toggle biometric exemption">
+              <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-transform ${biometricExempt ? "left-6" : "left-1"}`} />
+            </button>
+          </div>
+
+          <div className="rounded-[7px] border border-slate-800 bg-[#112133] p-4 text-[12px] text-slate-300">
+            <div className="mb-2 flex items-center gap-2 text-slate-200">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-sm border border-cyan-500/30 bg-cyan-500/10 text-cyan-300"><QrCode size={12} /></span>
+              <span className="font-medium">Select credential type</span>
+            </div>
+            <div className="space-y-2 text-[10px] text-slate-400">
+              <div className="rounded border border-slate-700 bg-[#0d1b2c] px-2 py-2">Summary</div>
+              <div className="rounded border border-slate-700 bg-[#0d1b2c] px-2 py-2">Cards</div>
+              <div className="rounded border border-slate-700 bg-[#0d1b2c] px-2 py-2">Biometrics</div>
+              <div className="rounded border border-slate-700 bg-[#0d1b2c] px-2 py-2">Dynamic QR</div>
+              <div className="rounded border border-slate-700 bg-[#0d1b2c] px-2 py-2">Mobile ID</div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === "Cards") {
+      return (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+              Card number
+              <input value={cardNumber} onChange={(event) => setCardNumber(event.target.value)} className="mt-2 h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 text-[12px] text-slate-100 outline-none placeholder:text-slate-600 focus:border-cyan-500/60" placeholder="e.g. 88231198" />
+            </label>
+            <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+              Card format
+              <select value={cardFormat} onChange={(event) => setCardFormat(event.target.value)} className="mt-2 h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[12px] text-slate-100 outline-none focus:border-cyan-500/60">
+                {cardOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+              </select>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+              Issue date
+              <div className="relative mt-2">
+                <input value={issueDate} onChange={(event) => setIssueDate(event.target.value)} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 pr-10 text-[12px] text-slate-100 outline-none focus:border-cyan-500/60" />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"><CalendarClock size={14} /></span>
+              </div>
+            </label>
+            <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+              Expiry date
+              <div className="relative mt-2">
+                <input value={neverExpires ? "Never" : expiryDate} onChange={(event) => setExpiryDate(event.target.value)} disabled={neverExpires} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 pr-10 text-[12px] text-slate-100 outline-none disabled:cursor-not-allowed disabled:opacity-60 focus:border-cyan-500/60" />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"><CalendarClock size={14} /></span>
+              </div>
+            </label>
+          </div>
+
+          <div className="flex items-center justify-between rounded-[6px] bg-[#0f1d2d] px-3 py-2.5 text-[10px] text-slate-300">
+            <span>Never Expires</span>
+            <button type="button" onClick={() => setNeverExpires((value) => !value)} className={`relative h-6 w-11 rounded-full transition-colors ${neverExpires ? "bg-[#12cdb7]" : "bg-slate-700"}`} aria-label="Toggle never expires">
+              <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-transform ${neverExpires ? "left-6" : "left-1"}`} />
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === "Biometrics") {
+      return (
+        <div className="space-y-4">
+          <div className="rounded-[7px] border border-slate-800 bg-[#101d2d] p-3 text-[11px] text-slate-300">
+            <div className="flex items-center gap-2 font-medium">
+              <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-cyan-500/10 text-cyan-300"><Fingerprint size={12} /></span>
+              Biometrics enrollment is device-driven — connect a supported reader/scanner to continue.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (activeTab === "Dynamic QR") {
+      return (
+        <div className="space-y-4">
+          <div className="rounded-[7px] border border-slate-800 bg-[#101d2d] p-3 text-[11px] text-slate-300">
+            <div className="flex items-center gap-2 font-medium">
+              <span className="flex h-5 w-5 items-center justify-center rounded-sm bg-cyan-500/10 text-cyan-300"><QrCode size={12} /></span>
+              Dynamic QR enrollment is device-driven — connect a supported reader/scanner to continue.
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+            Issue date
+            <div className="relative mt-2">
+              <input value={issueDate} onChange={(event) => setIssueDate(event.target.value)} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 pr-10 text-[12px] text-slate-100 outline-none focus:border-cyan-500/60" />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"><CalendarClock size={14} /></span>
+            </div>
+          </label>
+          <label className="block text-[9px] font-semibold uppercase tracking-[.12em] text-slate-500">
+            Expiry date
+            <div className="relative mt-2">
+              <input value={expiryDate} onChange={(event) => setExpiryDate(event.target.value)} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 pr-10 text-[12px] text-slate-100 outline-none focus:border-cyan-500/60" />
+              <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-slate-500"><CalendarClock size={14} /></span>
+            </div>
+          </label>
+        </div>
+
+        <div className="flex items-center justify-between rounded-[6px] bg-[#0f1d2d] px-3 py-2.5 text-[10px] text-slate-300">
+          <span>Activate Immediately</span>
+          <button type="button" onClick={() => setActivateImmediately((value) => !value)} className={`relative h-6 w-11 rounded-full transition-colors ${activateImmediately ? "bg-[#12cdb7]" : "bg-slate-700"}`} aria-label="Toggle immediate activation">
+            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-transform ${activateImmediately ? "left-6" : "left-1"}`} />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between rounded-[6px] bg-[#0f1d2d] px-3 py-2.5 text-[10px] text-slate-300">
+          <div>
+            <div>Biometric Exempt</div>
+            <div className="mt-1 text-[9px] text-slate-500">No biometric verification required</div>
+          </div>
+          <button type="button" onClick={() => setBiometricExempt((value) => !value)} className={`relative h-6 w-11 rounded-full transition-colors ${biometricExempt ? "bg-[#12cdb7]" : "bg-slate-700"}`} aria-label="Toggle biometric exemption">
+            <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-transform ${biometricExempt ? "left-6" : "left-1"}`} />
+          </button>
+        </div>
+
+        <div className="space-y-2 rounded-[6px] border border-slate-800 bg-[#0f1d2d] p-3 text-[10px] text-slate-300">
+          <div className="flex items-center justify-between">
+            <span>Absolute Time-Bound</span>
+            <button type="button" onClick={() => setMobileIdExempt((value) => !value)} className={`relative h-6 w-11 rounded-full transition-colors ${mobileIdExempt ? "bg-[#12cdb7]" : "bg-slate-700"}`} aria-label="Toggle absolute time bound">
+              <span className={`absolute top-1 h-4 w-4 rounded-full bg-white transition-transform ${mobileIdExempt ? "left-6" : "left-1"}`} />
+            </button>
+          </div>
+          <div className="text-[9px] leading-4 text-slate-500">Access is revoked at the exact expiry timestamp, regardless of schedule.</div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#020a12]/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true">
+      <div className="w-full max-w-[525px] rounded-[8px] border border-slate-800 bg-[#091a2b] p-0 shadow-[0_20px_60px_rgba(0,0,0,0.55)]">
+        <div className="flex items-center justify-between border-b border-slate-800 px-5 py-4">
+          <div>
+            <h2 className="text-[13px] font-semibold text-slate-100">Issue Credential</h2>
+            <p className="mt-1 text-[9px] text-slate-500">Multi-modal: card, PIN, biometric, dynamic QR, or mobile ID</p>
+          </div>
+          <button type="button" onClick={onClose} className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-100" aria-label="Close issue credential dialog">
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="px-5 pt-3">
+          <div className="flex gap-5 border-b border-slate-800">
+            {tabOptions.map((tab) => (
+              <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`pb-3 text-[10px] font-medium ${activeTab === tab ? "border-b-2 border-cyan-400 text-cyan-300" : "text-slate-500 hover:text-slate-300"}`}>
+                {tab}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="px-5 py-4">{renderTabContent()}</div>
+
+        <div className="flex items-center justify-end gap-2 border-t border-slate-800 px-5 py-4">
+          <Button onClick={onClose} kind="quiet" testId="button-cancel-credential-modal">Cancel</Button>
+          <Button onClick={() => { notify("Credential issued successfully.", "success"); onClose(); }} kind="primary" testId="button-submit-credential-modal">Issue Credential</Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function UserManagementPage({ notify }: { notify: Notify }) {
   const [users, setUsers] = useState<UserRecord[]>(initialUsers);
   const [apiConnected, setApiConnected] = useState(false);
@@ -413,6 +629,7 @@ function ModuleTablePage({
   description,
   eyebrow,
   action,
+  onAction,
   stats,
   tabs,
   columns,
@@ -425,6 +642,7 @@ function ModuleTablePage({
   description: string;
   eyebrow: string;
   action: string;
+  onAction?: () => void;
   stats?: { label: string; value: string; detail: string; tone?: "normal" | "good" | "warning" }[];
   tabs?: string[];
   columns: { key: string; label: string }[];
@@ -436,7 +654,13 @@ function ModuleTablePage({
   const filtered = rows.filter((row) => Object.values(row).some((value) => value.toLowerCase().includes(search.toLowerCase())));
   return (
     <main className="mx-auto max-w-[1420px] px-4 pb-10 pt-[78px] sm:px-6 lg:px-8">
-      <SectionHeading eyebrow={eyebrow} title={title} description={description} actions={<Button onClick={() => notify(`${action} workflow opened for ${module}.`, "info")} icon={Plus} kind="primary" testId={`button-${module.toLowerCase().replaceAll(" ", "-")}-action`}>{action}</Button>} />
+      <SectionHeading eyebrow={eyebrow} title={title} description={description} actions={<Button onClick={() => {
+        if (onAction) {
+          onAction();
+          return;
+        }
+        notify(`${action} workflow opened for ${module}.`, "info");
+      }} icon={Plus} kind="primary" testId={`button-${module.toLowerCase().replaceAll(" ", "-")}-action`}>{action}</Button>} />
       {stats && <div className="mb-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">{stats.map((stat) => <StatCard key={stat.label} {...stat} icon={module === "Mobile Users" ? Smartphone : module === "Credentials" ? CreditCard : module === "Attendance" ? CalendarClock : KeyRound} />)}</div>}
       <section className="control-surface overflow-hidden rounded-[7px] stagger-in">
         <div className="flex items-center justify-between border-b border-slate-800/80 px-3.5 py-3"><div><h2 className="text-[12px] font-semibold text-slate-200">{module}</h2><p className="mt-0.5 text-[9px] text-slate-600">Identity records · synced just now</p></div><Button onClick={() => notify(`${module} data refreshed.`, "success")} icon={RefreshCw} kind="quiet" testId={`button-${module.toLowerCase().replaceAll(" ", "-")}-refresh`}>Refresh</Button></div>
@@ -460,6 +684,7 @@ function MobileUsersPage({ notify }: { notify: Notify }) {
 }
 
 function CredentialsPage({ notify }: { notify: Notify }) {
+  const [issueModalOpen, setIssueModalOpen] = useState(false);
   const rows = [
     { card: "88231198", user: "Amaya Rao", type: "Default", format: "MIFARE DESFire EV2", issued: "2022-03-14", expiry: "Never", status: "Active" },
     { card: "88231204", user: "Daniel Osei", type: "Default", format: "MIFARE DESFire EV2", issued: "2021-07-01", expiry: "Never", status: "Active" },
@@ -467,16 +692,35 @@ function CredentialsPage({ notify }: { notify: Notify }) {
     { card: "88230877", user: "Liam Chen", type: "Default", format: "MIFARE DESFire EV2", issued: "2019-05-18", expiry: "Never", status: "Suspended" },
     { card: "91004501", user: "Visitor — R. Fontaine", type: "Temporary", format: "Dynamic QR", issued: "2026-08-22", expiry: "2026-08-22 17:00", status: "Active" },
   ];
-  return <ModuleTablePage notify={notify} module="Credentials" title="Credential Management" eyebrow="HRS TECH VIEW · MODULE 3" description="Issuance, tracking, and lifecycle control of every physical and digital access credential." action="Issue Credential" tabs={["Cards", "Biometrics", "Dynamic QR", "Vehicle Tags", "Last Card Action"]} columns={[{ key: "card", label: "CARD NUMBER" }, { key: "user", label: "USER" }, { key: "type", label: "CREDENTIAL TYPE" }, { key: "format", label: "FORMAT" }, { key: "issued", label: "ISSUED" }, { key: "expiry", label: "EXPIRY" }, { key: "status", label: "STATUS" }]} rows={rows} searchPlaceholder="Search by card number or user..." />;
+
+  return (
+    <>
+      <ModuleTablePage notify={notify} module="Credentials" title="Credential Management" eyebrow="HRS TECH VIEW · MODULE 3" description="Issuance, tracking, and lifecycle control of every physical and digital access credential." action="Issue Credential" onAction={() => setIssueModalOpen(true)} tabs={["Cards", "Biometrics", "Dynamic QR", "Vehicle Tags", "Last Card Action"]} columns={[{ key: "card", label: "CARD NUMBER" }, { key: "user", label: "USER" }, { key: "type", label: "CREDENTIAL TYPE" }, { key: "format", label: "FORMAT" }, { key: "issued", label: "ISSUED" }, { key: "expiry", label: "EXPIRY" }, { key: "status", label: "STATUS" }]} rows={rows} searchPlaceholder="Search by card number or user..." />
+      <CredentialIssueModal open={issueModalOpen} onClose={() => setIssueModalOpen(false)} notify={notify} />
+    </>
+  );
 }
 
 function AccessPage({ notify }: { notify: Notify }) {
+  const [activeTab, setActiveTab] = useState("Time Code");
+  const tabs = ["Time Code", "Time Zone", "Reader Group", "Access Groups", "Elevator Group", "Multi-Man Access"];
   const rows = [
     { zone: "Business Hours", mon: "09:00—18:00", tue: "09:00—18:00", wed: "09:00—18:00", thu: "09:00—18:00", fri: "09:00—18:00", sat: "Off", sun: "Off", holiday: "HG — National" },
     { zone: "Night Shift", mon: "22:00—06:00", tue: "22:00—06:00", wed: "22:00—06:00", thu: "22:00—06:00", fri: "22:00—06:00", sat: "22:00—06:00", sun: "Off", holiday: "HG — National" },
     { zone: "24x7 Security", mon: "00:00—23:59", tue: "00:00—23:59", wed: "00:00—23:59", thu: "00:00—23:59", fri: "00:00—23:59", sat: "00:00—23:59", sun: "00:00—23:59", holiday: "None" },
   ];
-  return <ModuleTablePage notify={notify} module="Access Configuration" title="Access Management" eyebrow="HRS TECH VIEW · MODULE 4" description="The core policy engine — time codes, time zones, reader groups, access groups, elevator groups, and multi-person authorisation." action="New" tabs={["Time Code", "Time Zone", "Reader Group", "Access Groups", "Elevator Group", "Multi-Man Access"]} columns={[{ key: "zone", label: "TIME ZONE" }, { key: "mon", label: "MON" }, { key: "tue", label: "TUE" }, { key: "wed", label: "WED" }, { key: "thu", label: "THU" }, { key: "fri", label: "FRI" }, { key: "sat", label: "SAT" }, { key: "sun", label: "SUN" }, { key: "holiday", label: "HOLIDAY GROUP" }]} rows={rows} searchPlaceholder="Search time zone or schedule..." />;
+  const timeZoneRows = [
+    ["Business Hours", "09:00—18:00", "09:00—18:00", "09:00—18:00", "09:00—18:00", "09:00—18:00", "Off", "Off", "HG — National"],
+    ["Night Shift", "22:00—06:00", "22:00—06:00", "22:00—06:00", "22:00—06:00", "22:00—06:00", "22:00—06:00", "Off", "HG — National"],
+    ["24x7 Security", "00:00—23:59", "00:00—23:59", "00:00—23:59", "00:00—23:59", "00:00—23:59", "00:00—23:59", "00:00—23:59", "None"],
+  ];
+  const readerGroupRows = [["Main Entrances", "6", "Lobby N, Lobby S, Rear Entry"], ["Server Room A", "2", "SRV-A-01, SRV-A-02"], ["All Readers", "38", "Organization-wide"]];
+  const accessGroupRows = [["Facilities — Standard", "User", "Main Entrances, Common Areas", "Business Hours", "Floors 1–3", "Local", "34"], ["IT — Server Rooms", "User", "Server Room A, Server Room B, NOC", "24x7 Security", "Floor B1", "Shared", "9"], ["Security — Full", "User", "All Readers", "24x7 Security", "All Floors", "Shared", "14"], ["Contractor — Mechanical", "Vehicle", "Loading Dock, Mechanical Rm", "Business Hours", "None", "Local", "6"]];
+  const elevatorRows = [["Floors 1–3", "HID VertX/Edge", "1, 2, 3", "Business Hours"], ["All Floors", "Mercury/AERO", "B1–14", "24x7 Security"]];
+  const multiManRows = [["Server Room Dual-Auth", "IT Admin, Security Officer", "45s", "Hard", "Server Room A"]];
+  const renderTable = (headers: string[], data: string[][], testId: string) => <div className="overflow-x-auto" data-testid={testId}><table className="w-full min-w-[760px] border-collapse text-left text-[10px]"><thead className="bg-[#152337] text-[9px] font-semibold tracking-[.08em] text-slate-500"><tr>{headers.map((header) => <th key={header} className="px-3 py-2.5">{header}</th>)}</tr></thead><tbody className="divide-y divide-slate-800/70">{data.map((row) => <tr key={row[0]} className="text-slate-300 transition-colors hover:bg-slate-800/35">{row.map((cell, index) => <td key={`${row[0]}-${index}`} className={`px-3 py-3 ${index === 0 ? "font-semibold text-slate-200" : ""}`}>{cell === "Shared" ? <span className="rounded-full bg-emerald-500/15 px-2 py-1 text-[9px] font-semibold text-emerald-400">{cell}</span> : cell === "Local" ? <span className="rounded-full bg-slate-700/60 px-2 py-1 text-[9px] text-slate-400">{cell}</span> : cell === "User" || cell === "Vehicle" ? <span className="rounded-full bg-blue-500/15 px-2 py-1 text-[9px] font-semibold text-blue-400">{cell}</span> : cell === "Hard" ? <span className="rounded-full bg-rose-500/20 px-2 py-1 text-[9px] font-semibold text-rose-300">{cell}</span> : cell}</td>)}</tr>)}</tbody></table></div>;
+  const content = activeTab === "Time Zone" ? renderTable(["TIME ZONE", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "HOLIDAY GROUP"], timeZoneRows, "table-time-zones") : activeTab === "Reader Group" ? renderTable(["READER GROUP", "READER COUNT", "DOORS"], readerGroupRows, "table-reader-groups") : activeTab === "Access Groups" ? <>{renderTable(["ACCESS GROUP", "TYPE", "READER GROUPS", "TIME ZONE", "ELEVATOR", "SHARED", "USERS"], accessGroupRows, "table-access-groups")}</> : activeTab === "Elevator Group" ? renderTable(["ELEVATOR GROUP", "CONTROLLER PLATFORM", "FLOORS", "TIME ZONE"], elevatorRows, "table-elevator-groups") : activeTab === "Multi-Man Access" ? <>{renderTable(["RULE", "REQUIRED ROLES", "SEQUENCE TIMEOUT", "ENTRY TYPE", "READERS"], multiManRows, "table-multi-man-access")}</> : <div className="flex min-h-[112px] items-center justify-center px-4 text-center text-[10px] text-slate-600">Select a configuration tab to view access policy records.</div>;
+  return <main className="mx-auto max-w-[1420px] px-4 pb-10 pt-[78px] sm:px-6 lg:px-8"><SectionHeading eyebrow="NEXORA VIEW · MODULE 4" title="Access Management" description="The core policy engine — time codes, time zones, reader groups, access groups, elevator groups, and multi-person authorisation." actions={<Button onClick={() => notify(`New ${activeTab} workflow opened.`, "info")} icon={Plus} kind="primary" testId="button-access-new">New</Button>} /><section className="control-surface overflow-hidden rounded-[8px]" data-testid="section-access-configuration"><div className="border-b border-slate-800/80 px-3.5 py-3"><h2 className="text-[12px] font-semibold text-slate-200">Access Configuration</h2></div><div className="flex gap-4 overflow-x-auto border-b border-slate-800/80 bg-[#0f1b2b] px-3.5 pt-2.5">{tabs.map((tab) => <button key={tab} onClick={() => setActiveTab(tab)} className={`whitespace-nowrap border-b-2 px-0.5 pb-2.5 text-[10px] ${activeTab === tab ? "border-cyan-400 font-semibold text-cyan-300" : "border-transparent text-slate-500 hover:text-slate-300"}`} data-testid={`tab-access-${tab.toLowerCase().replaceAll(" ", "-")}`}>{tab}</button>)}</div>{content}</section></main>;
 }
 
 function AttendancePage({ notify }: { notify: Notify }) {
