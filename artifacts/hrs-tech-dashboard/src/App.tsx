@@ -6,9 +6,8 @@ import {
   ArrowDown,
   BarChart3,
   Bell,
-  Camera,
-  CameraOff,
   Building2,
+  Camera as CameraIcon,
   CalendarClock,
   Check,
   ChevronDown,
@@ -28,7 +27,6 @@ import {
   MonitorCog,
   MoreHorizontal,
   Network,
-  Pencil,
   Plus,
   QrCode,
   RefreshCw,
@@ -37,6 +35,7 @@ import {
   ShieldAlert,
   Smartphone,
   SlidersHorizontal,
+  Pencil,
   Trash2,
   UserCheck,
   UserCog,
@@ -57,6 +56,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { createUser, listUsers, updateUserStatus } from "@/lib/users-api";
+import { createCamera, deleteCamera, listCameras, updateCamera, type CameraInput, type CameraRecord } from "@/lib/cameras-api";
 
 const queryClient = new QueryClient();
 const logoPath = "/hrs-tech-logo.png";
@@ -76,27 +76,6 @@ type UserRecord = {
   status: "Active" | "Suspended";
   lastSeen: string;
 };
-
-type CameraStatus = "Green" | "Yellow" | "Red";
-type FaceStatus = "Green" | "Red";
-type CameraRecord = {
-  id: string;
-  name: string;
-  department: string;
-  zone: string;
-  location: string;
-  status: CameraStatus;
-  faceStatus: FaceStatus;
-  lastSeen: string;
-};
-
-const initialCameras: CameraRecord[] = [
-  { id: "CAM-001", name: "North Lobby Entry", department: "Security", zone: "North Wing", location: "Main Lobby", status: "Green", faceStatus: "Green", lastSeen: "Just now" },
-  { id: "CAM-002", name: "Server Room A", department: "IT Infrastructure", zone: "Restricted", location: "Basement B1", status: "Green", faceStatus: "Green", lastSeen: "Just now" },
-  { id: "CAM-003", name: "Loading Dock", department: "Facilities", zone: "Service Area", location: "East Loading Bay", status: "Yellow", faceStatus: "Green", lastSeen: "2 min ago" },
-  { id: "CAM-004", name: "East Annex Corridor", department: "Security", zone: "East Annex", location: "Floor 2 Corridor", status: "Red", faceStatus: "Red", lastSeen: "6 min ago" },
-  { id: "CAM-005", name: "Finance Floor Access", department: "Finance", zone: "Office Floor", location: "Floor 4 South", status: "Green", faceStatus: "Red", lastSeen: "Just now" },
-];
 
 const initialUsers: UserRecord[] = [
   { id: "1", initials: "AR", name: "Amaya Rao", employeeId: "EMP-19321", department: "Facilities", title: "Facilities Manager", group: "Facilities — Standard", type: "Employee", status: "Active", lastSeen: "Today, 08:42" },
@@ -129,7 +108,7 @@ const navGroups: { label: string; items: { label: string; icon: LucideIcon; href
     label: "SECURITY VIEW",
     items: [
       { label: "Real-Time Monitoring", icon: Activity, href: "/monitoring" },
-      { label: "Camera", icon: Camera, href: "/cameras", badge: "2" },
+      { label: "Camera", icon: CameraIcon, href: "/cameras" },
       { label: "Controller Management", icon: MonitorCog, href: "/controllers" },
       { label: "Area Control", icon: DoorOpen, href: "/areas" },
       { label: "Logical Area Control", icon: Network, href: "/logical-areas" },
@@ -865,59 +844,72 @@ function MonitoringPage({ notify }: { notify: Notify }) {
   return <main className="mx-auto max-w-[1420px] px-4 pb-10 pt-[78px] sm:px-6 lg:px-8"><SectionHeading eyebrow="SECURITY VIEW · MODULE 11" title="Real-Time Monitoring" description="Live security operations console — device status, map visualization, and emergency mode controls." /><div className="control-surface mb-2.5 flex flex-wrap items-center gap-2 rounded-[7px] p-2.5"><Button onClick={() => notify("Evacuation mode enabled for HQ — North Wing.", "warning")} kind="danger" testId="button-evacuation">Evacuation</Button><Button onClick={() => notify("Lockdown mode enabled.", "warning")} kind="danger" testId="button-lockdown">Lockdown</Button><Button onClick={() => notify("Maintenance mode selected.", "info")} testId="button-maintenance">Maintenance</Button><Button onClick={() => notify("Live monitoring reset.", "success")} icon={RefreshCw} testId="button-monitoring-reset">Reset</Button><select className="ml-auto h-8 rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-300" data-testid="select-monitoring-scope"><option>Scope: Branch — HQ North Wing</option><option>Scope: All branches</option></select></div><div className="grid gap-2.5 lg:grid-cols-[1.05fr_1fr]"><section className="control-surface overflow-hidden rounded-[7px]"><div className="border-b border-slate-800/80 px-3.5 py-3"><h2 className="text-[12px] font-semibold text-slate-200">Facility Map</h2></div><div className="m-3 h-[250px] rounded-[6px] border border-slate-800 bg-[#172638] relative overflow-hidden"><div className="absolute inset-0 opacity-40" style={{ backgroundImage: "linear-gradient(#28415a 1px, transparent 1px), linear-gradient(90deg, #28415a 1px, transparent 1px)", backgroundSize: "48px 48px" }} />{["18% 28%", "42% 22%", "65% 38%", "30% 62%", "76% 68%", "55% 52%"].map((position, index) => <span key={position} className={`absolute h-2.5 w-2.5 rounded-full border-2 border-[#172638] ${index % 3 === 1 ? "bg-rose-400" : index % 3 === 2 ? "bg-amber-400" : "bg-cyan-400"}`} style={{ left: position.split(" ")[0], top: position.split(" ")[1] }} />)}</div></section><section className="control-surface overflow-hidden rounded-[7px]"><div className="border-b border-slate-800/80 px-3.5 py-3"><h2 className="text-[12px] font-semibold text-slate-200">Live Device Status</h2></div><div className="divide-y divide-slate-800/70 px-3.5">{devices.map(([label, value], index) => <div key={label} className="flex items-center justify-between py-2.5 text-[10px]"><span className="flex items-center gap-2 text-slate-300"><i className={`h-2 w-2 rounded-full ${index === 1 ? "bg-emerald-400" : "bg-amber-400"}`} />{label}</span><span className="mono text-[9px] text-slate-500">{value}</span></div>)}</div></section></div></main>;
 }
 
-function CameraStatusBadge({ status }: { status: CameraStatus }) {
-  const styles = status === "Green" ? "bg-emerald-500/15 text-emerald-400" : status === "Yellow" ? "bg-amber-500/15 text-amber-300" : "bg-rose-500/15 text-rose-300";
-  const dot = status === "Green" ? "bg-emerald-400" : status === "Yellow" ? "bg-amber-300" : "bg-rose-400";
-  return <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[9px] font-semibold ${styles}`}><span className={`h-1.5 w-1.5 rounded-full ${dot}`} />{status}</span>;
-}
+const cameraSeed: CameraRecord[] = [
+  { id: -1, name: "Canteen Entry", cameraCode: "CAM-CAN-01", department: "Canteen", zone: "North Wing", placement: "Door entry", streamUrl: "rtsp://camera.local/canteen-entry", health: "Online", faceIdentification: "Enabled", alertSeverity: "Green", alertsEnabled: true, photoEvidenceUrl: "" },
+  { id: -2, name: "Security South Door", cameraCode: "CAM-SEC-01", department: "Security", zone: "South Wing", placement: "Door entry", streamUrl: "rtsp://camera.local/security-south", health: "Degraded", faceIdentification: "Enabled", alertSeverity: "Yellow", alertsEnabled: true, photoEvidenceUrl: "" },
+  { id: -3, name: "Server Room East", cameraCode: "CAM-SRV-01", department: "Server", zone: "Basement", placement: "East corner", streamUrl: "rtsp://camera.local/server-east", health: "Offline", faceIdentification: "Unavailable", alertSeverity: "Red", alertsEnabled: true, photoEvidenceUrl: "" },
+  { id: -4, name: "Production North Door", cameraCode: "CAM-PRD-01", department: "Production", zone: "East Annex", placement: "Door entry", streamUrl: "rtsp://camera.local/production-north", health: "Online", faceIdentification: "Enabled", alertSeverity: "Green", alertsEnabled: true, photoEvidenceUrl: "" },
+];
 
-function CamerasPage({ notify }: { notify: Notify }) {
-  const [cameras, setCameras] = useState<CameraRecord[]>(initialCameras);
+const emptyCamera: CameraInput = { name: "", cameraCode: "", department: "Canteen", zone: "", placement: "Door entry", streamUrl: "", health: "Online", faceIdentification: "Enabled", alertSeverity: "Green", alertsEnabled: true, photoEvidenceUrl: "" };
+
+function CameraPage({ notify }: { notify: Notify }) {
+  const [cameras, setCameras] = useState<CameraRecord[]>(cameraSeed);
+  const [form, setForm] = useState<CameraInput>(emptyCamera);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
-  const [department, setDepartment] = useState("All Departments");
-  const [zone, setZone] = useState("All Zones");
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [draft, setDraft] = useState({ name: "", department: "Security", zone: "North Wing", location: "", status: "Green" as CameraStatus, faceStatus: "Green" as FaceStatus });
-  const [alerts, setAlerts] = useState([
-    { id: 1, title: "Department bypass detected", detail: "East Annex Corridor · Unknown person entered Restricted zone", time: "2 min ago", severity: "Red" as CameraStatus },
-    { id: 2, title: "Face identification mismatch", detail: "Finance Floor Access · Identity could not be verified", time: "9 min ago", severity: "Red" as CameraStatus },
-    { id: 3, title: "Camera signal degraded", detail: "Loading Dock · Intermittent stream response", time: "18 min ago", severity: "Yellow" as CameraStatus },
-  ]);
+  const [department, setDepartment] = useState("All departments");
+  const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const departments = ["All Departments", ...Array.from(new Set(cameras.map((camera) => camera.department)))];
-  const zones = ["All Zones", ...Array.from(new Set(cameras.map((camera) => camera.zone)))];
-  const filtered = cameras.filter((camera) => `${camera.name} ${camera.id} ${camera.location}`.toLowerCase().includes(search.toLowerCase()) && (department === "All Departments" || camera.department === department) && (zone === "All Zones" || camera.zone === zone));
-  const openAdd = () => { setEditingId(null); setDraft({ name: "", department: "Security", zone: "North Wing", location: "", status: "Green", faceStatus: "Green" }); setModalOpen(true); };
-  const openEdit = (camera: CameraRecord) => { setEditingId(camera.id); setDraft({ name: camera.name, department: camera.department, zone: camera.zone, location: camera.location, status: camera.status, faceStatus: camera.faceStatus }); setModalOpen(true); };
-  const saveCamera = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!draft.name.trim() || !draft.location.trim()) { notify("Enter a camera name and location.", "warning"); return; }
-    if (editingId) {
-      setCameras((current) => current.map((camera) => camera.id === editingId ? { ...camera, ...draft, name: draft.name.trim(), location: draft.location.trim() } : camera));
-      notify(`${draft.name} was updated.`, "success");
-    } else {
-      const nextNumber = cameras.length + 1;
-      setCameras((current) => [{ id: `CAM-${String(nextNumber).padStart(3, "0")}`, ...draft, name: draft.name.trim(), location: draft.location.trim(), lastSeen: "Just now" }, ...current]);
-      notify(`${draft.name} was added to the camera inventory.`, "success");
+  useEffect(() => {
+    listCameras().then((records) => {
+      if (records.length > 0) setCameras(records);
+    }).catch(() => notify("Backend unavailable; showing local camera directory.", "warning")).finally(() => setLoading(false));
+  }, [notify]);
+
+  const departments = Array.from(new Set(cameras.map((camera) => camera.department)));
+  const filtered = cameras.filter((camera) => {
+    const matchesSearch = Object.values(camera).some((value) => String(value).toLowerCase().includes(search.toLowerCase()));
+    return matchesSearch && (department === "All departments" || camera.department === department);
+  });
+  const counts = { online: cameras.filter((camera) => camera.health === "Online").length, warning: cameras.filter((camera) => camera.alertSeverity === "Yellow").length, critical: cameras.filter((camera) => camera.alertSeverity === "Red").length, face: cameras.filter((camera) => camera.faceIdentification === "Enabled").length };
+  const openCreate = () => { setEditingId(null); setForm({ ...emptyCamera }); setShowForm(true); };
+  const openEdit = (camera: CameraRecord) => { setEditingId(camera.id); setForm({ ...camera }); setShowForm(true); };
+  const setField = <K extends keyof CameraInput>(key: K, value: CameraInput[K]) => setForm((current) => ({ ...current, [key]: value }));
+  const save = async () => {
+    if (!form.name.trim() || !form.cameraCode.trim() || !form.zone.trim()) {
+      notify("Camera name, code, and zone are required.", "warning");
+      return;
     }
-    setModalOpen(false);
+    try {
+      const saved = editingId === null ? await createCamera(form) : await updateCamera(editingId, form);
+      setCameras((current) => editingId === null ? [...current, saved] : current.map((camera) => camera.id === editingId ? saved : camera));
+      notify(`${form.name} ${editingId === null ? "added" : "updated"}.`, "success");
+    } catch {
+      const local = { ...form, id: editingId ?? -Date.now() };
+      setCameras((current) => editingId === null ? [...current, local] : current.map((camera) => camera.id === editingId ? local : camera));
+      notify("Saved locally; camera API is unavailable.", "warning");
+    }
+    setShowForm(false);
   };
-  const deleteCamera = (camera: CameraRecord) => { setCameras((current) => current.filter((item) => item.id !== camera.id)); notify(`${camera.name} was removed from the camera inventory.`, "warning"); };
-  const sendTestAlert = () => {
-    setAlerts((current) => [{ id: Date.now(), title: "Department bypass detected", detail: "North Lobby Entry · Test snapshot attached for operator review", time: "Just now", severity: "Red" }, ...current]);
-    notify("Red alert sent with camera snapshot attached.", "warning");
+  const remove = async (camera: CameraRecord) => {
+    if (!window.confirm(`Delete ${camera.name}?`)) return;
+    try { if (camera.id > 0) await deleteCamera(camera.id); } catch { notify("Camera API is unavailable; removed from local view only.", "warning"); }
+    setCameras((current) => current.filter((item) => item.id !== camera.id));
   };
-
+  const severityClass = (severity: CameraRecord["alertSeverity"]) => severity === "Red" ? "bg-rose-500/15 text-rose-300" : severity === "Yellow" ? "bg-amber-500/15 text-amber-300" : "bg-emerald-500/15 text-emerald-300";
+  const healthClass = (health: CameraRecord["health"]) => health === "Online" ? "text-emerald-400" : health === "Degraded" ? "text-amber-300" : "text-rose-300";
   return <main className="mx-auto max-w-[1420px] px-4 pb-10 pt-[78px] sm:px-6 lg:px-8">
-    <SectionHeading eyebrow="SECURITY VIEW · MODULE 11" title="Camera" description="Manage cameras by department and zone, monitor camera health, and review face-identification and perimeter bypass alerts." actions={<><Button onClick={sendTestAlert} icon={Bell} kind="danger" testId="button-camera-test-alert">Send Test Alert</Button><Button onClick={openAdd} icon={Plus} kind="primary" testId="button-camera-add">Add Camera</Button></>} />
-    <div className="mb-3 grid grid-cols-2 gap-2.5 lg:grid-cols-4"><StatCard label="TOTAL CAMERAS" value={String(cameras.length)} detail="Across all departments" icon={Camera} /><StatCard label="WORKING" value={String(cameras.filter((camera) => camera.status === "Green").length)} detail="Live video signal" tone="good" icon={Check} /><StatCard label="ATTENTION" value={String(cameras.filter((camera) => camera.status === "Yellow").length)} detail="Review this shift" tone="warning" icon={ShieldAlert} /><StatCard label="IMMEDIATE ACTION" value={String(cameras.filter((camera) => camera.status === "Red").length)} detail="Offline or critical" tone="warning" icon={CameraOff} /></div>
-    <div className="grid gap-2.5 xl:grid-cols-[1.55fr_1fr]">
-      <section className="control-surface overflow-hidden rounded-[7px]" data-testid="section-camera-inventory"><div className="border-b border-slate-800/80 px-3.5 py-3"><h2 className="text-[12px] font-semibold text-slate-200">Camera Inventory</h2><p className="mt-0.5 text-[9px] text-slate-600">Department and zone assignment · health polled just now</p></div><div className="flex flex-col gap-2 border-b border-slate-800/80 bg-[#101d2d] px-3.5 py-2.5 sm:flex-row"><div className="relative min-w-0 flex-1"><Search size={13} className="absolute left-2.5 top-2.5 text-slate-600" /><input value={search} onChange={(event) => setSearch(event.target.value)} className="h-8 w-full rounded-[4px] border border-slate-800 bg-[#0b1522] pl-8 pr-3 text-[10px] text-slate-200 outline-none placeholder:text-slate-600 focus:border-cyan-500/60" placeholder="Search cameras or locations..." data-testid="input-camera-search" /></div><select value={department} onChange={(event) => setDepartment(event.target.value)} className="h-8 rounded-[4px] border border-slate-800 bg-[#0b1522] px-2 text-[10px] text-slate-300 outline-none" data-testid="select-camera-department">{departments.map((item) => <option key={item}>{item}</option>)}</select><select value={zone} onChange={(event) => setZone(event.target.value)} className="h-8 rounded-[4px] border border-slate-800 bg-[#0b1522] px-2 text-[10px] text-slate-300 outline-none" data-testid="select-camera-zone">{zones.map((item) => <option key={item}>{item}</option>)}</select></div><div className="overflow-x-auto"><table className="w-full min-w-[760px] border-collapse text-left text-[10px]"><thead className="bg-[#152337] text-[9px] font-semibold tracking-[.08em] text-slate-500"><tr><th className="px-3 py-2.5">CAMERA</th><th className="px-3 py-2.5">DEPARTMENT</th><th className="px-3 py-2.5">ZONE</th><th className="px-3 py-2.5">HEALTH</th><th className="px-3 py-2.5">FACE ID</th><th className="px-3 py-2.5 text-right">ACTIONS</th></tr></thead><tbody className="divide-y divide-slate-800/70">{filtered.map((camera) => <tr key={camera.id} className="group text-slate-300 hover:bg-slate-800/35"><td className="px-3 py-3"><div className="flex items-center gap-2"><span className="flex h-7 w-7 items-center justify-center rounded-[4px] border border-slate-700 bg-[#17283c] text-cyan-300"><Camera size={13} /></span><div><div className="font-semibold text-slate-200">{camera.name}</div><div className="mono mt-0.5 text-[9px] text-slate-600">{camera.id} · {camera.location}</div></div></div></td><td className="px-3 py-3">{camera.department}</td><td className="px-3 py-3 text-slate-400">{camera.zone}</td><td className="px-3 py-3"><CameraStatusBadge status={camera.status} /></td><td className="px-3 py-3"><span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[9px] font-semibold ${camera.faceStatus === "Green" ? "bg-emerald-500/15 text-emerald-400" : "bg-rose-500/15 text-rose-300"}`}><span className={`h-1.5 w-1.5 rounded-full ${camera.faceStatus === "Green" ? "bg-emerald-400" : "bg-rose-400"}`} />{camera.faceStatus === "Green" ? "Identifying" : "Mismatch"}</span></td><td className="px-3 py-3 text-right"><div className="flex justify-end gap-1 opacity-70 group-hover:opacity-100"><button onClick={() => openEdit(camera)} className="rounded p-1.5 text-slate-500 hover:bg-slate-700 hover:text-cyan-300" aria-label={`Edit ${camera.name}`} data-testid={`button-camera-edit-${camera.id}`}><Pencil size={13} /></button><button onClick={() => deleteCamera(camera)} className="rounded p-1.5 text-slate-500 hover:bg-rose-500/15 hover:text-rose-300" aria-label={`Delete ${camera.name}`} data-testid={`button-camera-delete-${camera.id}`}><Trash2 size={13} /></button></div></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="flex min-h-[120px] items-center justify-center text-[10px] text-slate-600">No cameras match this view.</div>}</div><div className="border-t border-slate-800/80 px-3.5 py-2.5 text-[9px] text-slate-600">Showing <strong className="text-slate-400">{filtered.length}</strong> of {cameras.length} cameras</div></section>
-      <section className="control-surface overflow-hidden rounded-[7px]" data-testid="section-camera-alerts"><div className="flex items-center justify-between border-b border-slate-800/80 px-3.5 py-3"><div><h2 className="text-[12px] font-semibold text-slate-200">Camera Alerts</h2><p className="mt-0.5 text-[9px] text-slate-600">Bypass events and identification exceptions</p></div><span className="rounded-full bg-rose-500/15 px-2 py-1 text-[9px] font-semibold text-rose-300">{alerts.filter((alert) => alert.severity === "Red").length} urgent</span></div><div className="divide-y divide-slate-800/70">{alerts.map((alert) => <div key={alert.id} className="flex gap-3 px-3.5 py-3"><div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[4px] ${alert.severity === "Red" ? "bg-rose-500/15 text-rose-300" : "bg-amber-500/15 text-amber-300"}`}>{alert.severity === "Red" ? <ShieldAlert size={14} /> : <Bell size={14} />}</div><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-2"><div className="text-[10px] font-semibold text-slate-200">{alert.title}</div><span className="shrink-0 text-[9px] text-slate-600">{alert.time}</span></div><div className="mt-1 text-[9px] leading-4 text-slate-500">{alert.detail}</div><div className="mt-2 inline-flex items-center gap-1.5 rounded border border-slate-700 bg-[#0c1725] px-2 py-1 text-[8px] text-slate-400"><Camera size={10} className="text-cyan-300" /> Photo snapshot attached</div></div></div>)}</div></section>
-    </div>
-    <div className="mt-2.5 grid gap-2.5 md:grid-cols-3"><InfoTile icon={Check} label="GREEN" value="Working normally" detail="Live signal and face ID available" tone="good" /><InfoTile icon={ShieldAlert} label="YELLOW" value="Review required" detail="Degraded signal or delayed response" /><InfoTile icon={CameraOff} label="RED" value="Immediate action" detail="Offline, bypass, or face mismatch" /></div>
-    {modalOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050a11]/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" data-testid="dialog-camera"><form onSubmit={saveCamera} className="control-surface w-full max-w-[470px] rounded-[7px] p-5 shadow-2xl"><div className="mb-5 flex items-start justify-between"><div><div className="mono text-[9px] tracking-[.16em] text-cyan-400">CAMERA INVENTORY</div><h2 className="mt-1 text-[16px] font-semibold text-slate-100">{editingId ? "Modify camera" : "Add camera"}</h2><p className="mt-1 text-[10px] text-slate-500">Assign the camera to an owning department and security zone.</p></div><button type="button" onClick={() => setModalOpen(false)} className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-200" aria-label="Close camera dialog"><X size={16} /></button></div><div className="space-y-3"><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Camera name</span><input autoFocus value={draft.name} onChange={(event) => setDraft({ ...draft, name: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 text-[11px] text-slate-200 outline-none focus:border-cyan-400/60" placeholder="e.g. North Lobby Entry" data-testid="input-camera-name" /></label><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Location</span><input value={draft.location} onChange={(event) => setDraft({ ...draft, location: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 text-[11px] text-slate-200 outline-none focus:border-cyan-400/60" placeholder="e.g. Main Lobby" data-testid="input-camera-location" /></label><div className="grid grid-cols-2 gap-3"><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Department</span><select value={draft.department} onChange={(event) => setDraft({ ...draft, department: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200"><option>Security</option><option>Facilities</option><option>IT Infrastructure</option><option>Finance</option><option>HR</option></select></label><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Zone</span><select value={draft.zone} onChange={(event) => setDraft({ ...draft, zone: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200"><option>North Wing</option><option>Restricted</option><option>Service Area</option><option>East Annex</option><option>Office Floor</option></select></label></div><div className="grid grid-cols-2 gap-3"><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Camera health</span><select value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as CameraStatus })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200"><option>Green</option><option>Yellow</option><option>Red</option></select></label><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Face identification</span><select value={draft.faceStatus} onChange={(event) => setDraft({ ...draft, faceStatus: event.target.value as FaceStatus })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200"><option>Green</option><option>Red</option></select></label></div></div><div className="mt-5 flex justify-end gap-2"><Button onClick={() => setModalOpen(false)} kind="quiet" testId="button-camera-cancel">Cancel</Button><Button onClick={() => undefined} kind="primary" type="submit" testId="button-camera-save">{editingId ? "Save changes" : "Add camera"}</Button></div></form></div>}
+    <SectionHeading eyebrow="SECURITY VIEW · MODULE 12" title="Camera" description="Manage department and zone camera coverage, health, face identification, and photo-backed security alerts." actions={<Button onClick={openCreate} icon={Plus} kind="primary" testId="button-camera-add">Add Camera</Button>} />
+    <div className="mb-3 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4"><StatCard label="CAMERAS ONLINE" value={`${counts.online}/${cameras.length}`} detail="Live heartbeat healthy" tone="good" icon={CameraIcon} /><StatCard label="YELLOW ALERTS" value={String(counts.warning)} detail="Review required" tone="warning" icon={ShieldAlert} /><StatCard label="RED ALERTS" value={String(counts.critical)} detail="Immediate action" tone="warning" icon={Bell} /><StatCard label="FACE IDENTIFICATION" value={`${counts.face}`} detail="Cameras enabled" tone="good" icon={Fingerprint} /></div>
+    <section className="control-surface overflow-hidden rounded-[7px]" data-testid="section-camera-directory"><div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 px-3.5 py-3"><div><h2 className="text-[12px] font-semibold text-slate-200">Camera Directory</h2><p className="mt-0.5 text-[9px] text-slate-600">{loading ? "Syncing with camera registry..." : "Department and zone coverage · photo evidence enabled for alerts"}</p></div><div className="flex items-center gap-3 text-[9px]"><span className="text-emerald-400">Green · healthy</span><span className="text-amber-300">Yellow · review</span><span className="text-rose-300">Red · immediate action</span></div></div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-slate-800/80 bg-[#101d2d] px-3.5 py-3"><div className="relative w-full max-w-[330px]"><Search size={13} className="absolute left-2.5 top-2.5 text-slate-600" /><input value={search} onChange={(event) => setSearch(event.target.value)} className="h-8 w-full rounded-[4px] border border-slate-800 bg-[#0b1522] pl-8 pr-3 text-[10px] text-slate-200 outline-none focus:border-cyan-500/60" placeholder="Search camera, code, zone..." data-testid="input-camera-search" /></div><select value={department} onChange={(event) => setDepartment(event.target.value)} className="h-8 rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-300" data-testid="select-camera-department"><option>All departments</option>{departments.map((item) => <option key={item}>{item}</option>)}</select></div>
+      <div className="overflow-x-auto"><table className="w-full min-w-[1040px] border-collapse text-left"><thead className="bg-[#152337] text-[9px] font-semibold tracking-[.08em] text-slate-500"><tr>{["CAMERA", "DEPARTMENT / ZONE", "PLACEMENT", "HEALTH", "FACE ID", "ALERT", "ACTIONS"].map((heading) => <th key={heading} className="px-3 py-2.5">{heading}</th>)}</tr></thead><tbody className="divide-y divide-slate-800/70">{filtered.map((camera) => <tr key={camera.id} className="text-[10px] text-slate-300 hover:bg-slate-800/35"><td className="px-3 py-3"><div className="font-semibold text-slate-200">{camera.name}</div><div className="mono mt-1 text-[9px] text-slate-600">{camera.cameraCode}</div></td><td className="px-3 py-3"><div className="text-slate-200">{camera.department}</div><div className="mt-1 text-[9px] text-slate-600">{camera.zone}</div></td><td className="px-3 py-3">{camera.placement}</td><td className={`px-3 py-3 font-semibold ${healthClass(camera.health)}`}><span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-current" />{camera.health}</td><td className="px-3 py-3"><span className={camera.faceIdentification === "Enabled" ? "text-emerald-400" : "text-slate-500"}>{camera.faceIdentification}</span></td><td className="px-3 py-3"><span className={`rounded-full px-2 py-1 text-[9px] font-semibold ${severityClass(camera.alertSeverity)}`}>{camera.alertSeverity}</span><div className="mt-1 text-[9px] text-slate-600">{camera.alertsEnabled ? "Alerts on · photo" : "Alerts off"}</div></td><td className="px-3 py-3"><div className="flex gap-1"><button onClick={() => openEdit(camera)} className="rounded p-1.5 text-slate-500 hover:bg-slate-700 hover:text-cyan-300" title="Edit camera" aria-label={`Edit ${camera.name}`}><Pencil size={13} /></button><button onClick={() => remove(camera)} className="rounded p-1.5 text-slate-500 hover:bg-rose-500/15 hover:text-rose-300" title="Delete camera" aria-label={`Delete ${camera.name}`}><Trash2 size={13} /></button></div></td></tr>)}</tbody></table>{filtered.length === 0 && <div className="flex min-h-[150px] items-center justify-center text-[10px] text-slate-600">No cameras match this view.</div>}</div>
+      <div className="border-t border-slate-800/80 px-3.5 py-2.5 text-[9px] text-slate-600">Showing <strong className="text-slate-400">{filtered.length}</strong> of {cameras.length} cameras</div>
+    </section>
+    <section className="control-surface mt-3 overflow-hidden rounded-[7px]"><div className="border-b border-slate-800/80 px-3.5 py-3"><h2 className="text-[12px] font-semibold text-slate-200">Recent Camera Alerts</h2><p className="mt-0.5 text-[9px] text-slate-600">Bypass and face-identification events include captured photo evidence.</p></div><div className="grid gap-2 p-3 md:grid-cols-3"><div className="rounded-[6px] border border-rose-500/25 bg-rose-500/[.06] p-3"><div className="flex items-center gap-2 text-[10px] font-semibold text-rose-300"><span className="h-2 w-2 rounded-full bg-rose-400" />Department bypass detected</div><p className="mt-2 text-[9px] leading-4 text-slate-500">Security South Door · person entered a restricted zone without department authorization.</p><button onClick={() => notify("Opening photo evidence for the department bypass event.", "warning")} className="mt-2 text-[9px] font-semibold text-cyan-300 hover:text-cyan-200">View captured photo</button></div><div className="rounded-[6px] border border-amber-500/25 bg-amber-500/[.06] p-3"><div className="flex items-center gap-2 text-[10px] font-semibold text-amber-300"><span className="h-2 w-2 rounded-full bg-amber-400" />Camera health degraded</div><p className="mt-2 text-[9px] leading-4 text-slate-500">Security South Door · intermittent stream response, last heartbeat 42 seconds ago.</p><button onClick={() => notify("Camera health check requested.", "info")} className="mt-2 text-[9px] font-semibold text-cyan-300 hover:text-cyan-200">Run health check</button></div><div className="rounded-[6px] border border-emerald-500/25 bg-emerald-500/[.06] p-3"><div className="flex items-center gap-2 text-[10px] font-semibold text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400" />Face identification clear</div><p className="mt-2 text-[9px] leading-4 text-slate-500">Canteen Entry · recognized person matched to an active directory record.</p><button onClick={() => notify("Face identification audit opened.", "success")} className="mt-2 text-[9px] font-semibold text-cyan-300 hover:text-cyan-200">View audit</button></div></div></section>
+    {showForm && <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050a11]/75 p-4"><div className="w-full max-w-[650px] rounded-[8px] border border-slate-700 bg-[#101b2a] shadow-2xl"><div className="flex items-center justify-between border-b border-slate-800 px-4 py-3"><div><h2 className="text-[13px] font-semibold text-slate-100">{editingId === null ? "Add Camera" : "Edit Camera"}</h2><p className="mt-1 text-[9px] text-slate-500">Configure coverage, detection, and photo-backed alerts.</p></div><button onClick={() => setShowForm(false)} className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-200" aria-label="Close camera form"><X size={16} /></button></div><div className="grid gap-3 p-4 sm:grid-cols-2">{([["name", "Camera name"], ["cameraCode", "Camera code"], ["zone", "Zone"], ["placement", "Placement"], ["streamUrl", "Stream URL"], ["photoEvidenceUrl", "Photo evidence URL"]] as const).map(([key, label]) => <label key={key} className="block text-[9px] font-semibold uppercase tracking-[.1em] text-slate-500">{label}<input value={form[key]} onChange={(event) => setField(key, event.target.value)} className="mt-1.5 h-8 w-full rounded-[4px] border border-slate-700 bg-[#0b1522] px-2.5 text-[10px] normal-case tracking-normal text-slate-200 outline-none focus:border-cyan-500/60" /></label>)}<label className="block text-[9px] font-semibold uppercase tracking-[.1em] text-slate-500">Department<select value={form.department} onChange={(event) => setField("department", event.target.value)} className="mt-1.5 h-8 w-full rounded-[4px] border border-slate-700 bg-[#0b1522] px-2 text-[10px] normal-case tracking-normal text-slate-200"><option>Canteen</option><option>Security</option><option>Server</option><option>Production</option><option>HR</option><option>Facilities</option></select></label><label className="block text-[9px] font-semibold uppercase tracking-[.1em] text-slate-500">Health<select value={form.health} onChange={(event) => setField("health", event.target.value as CameraInput["health"])} className="mt-1.5 h-8 w-full rounded-[4px] border border-slate-700 bg-[#0b1522] px-2 text-[10px] normal-case tracking-normal text-slate-200"><option>Online</option><option>Degraded</option><option>Offline</option></select></label><label className="block text-[9px] font-semibold uppercase tracking-[.1em] text-slate-500">Face identification<select value={form.faceIdentification} onChange={(event) => setField("faceIdentification", event.target.value as CameraInput["faceIdentification"])} className="mt-1.5 h-8 w-full rounded-[4px] border border-slate-700 bg-[#0b1522] px-2 text-[10px] normal-case tracking-normal text-slate-200"><option>Enabled</option><option>Disabled</option><option>Unavailable</option></select></label><label className="block text-[9px] font-semibold uppercase tracking-[.1em] text-slate-500">Alert severity<select value={form.alertSeverity} onChange={(event) => setField("alertSeverity", event.target.value as CameraInput["alertSeverity"])} className="mt-1.5 h-8 w-full rounded-[4px] border border-slate-700 bg-[#0b1522] px-2 text-[10px] normal-case tracking-normal text-slate-200"><option>Green</option><option>Yellow</option><option>Red</option></select></label><label className="flex items-center gap-2 self-end pb-1 text-[10px] text-slate-300"><input type="checkbox" checked={form.alertsEnabled} onChange={(event) => setField("alertsEnabled", event.target.checked)} className="accent-cyan-400" />Send alerts with photo evidence</label></div><div className="flex justify-end gap-2 border-t border-slate-800 px-4 py-3"><Button onClick={() => setShowForm(false)} kind="quiet" testId="button-camera-cancel">Cancel</Button><Button onClick={save} kind="primary" testId="button-camera-save">Save Camera</Button></div></div></div>}
   </main>;
 }
 
@@ -983,7 +975,7 @@ function DashboardShell() {
           <Route path="/analytics"><AnalyticsPage /></Route>
           <Route path="/settings"><SettingsSnapshotPage notify={notify} /></Route>
           <Route path="/monitoring"><MonitoringPage notify={notify} /></Route>
-          <Route path="/cameras"><CamerasPage notify={notify} /></Route>
+          <Route path="/cameras"><CameraPage notify={notify} /></Route>
           <Route path="/controllers"><ControllersPage notify={notify} /></Route>
           <Route path="/areas"><AreasPage notify={notify} /></Route>
           <Route path="/logical-areas"><LogicalAreasPage /></Route>
