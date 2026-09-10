@@ -1037,6 +1037,7 @@ function CameraPage({ notify }: { notify: Notify }) {
     const matchesSearch = Object.values(camera).some((value) => String(value).toLowerCase().includes(search.toLowerCase()));
     return matchesSearch && (department === "All departments" || camera.department === department);
   });
+  const liveCameras = filtered.filter((camera) => camera.health !== "Offline");
   const counts = { online: cameras.filter((camera) => camera.health === "Online").length, warning: cameras.filter((camera) => camera.alertSeverity === "Yellow").length, critical: cameras.filter((camera) => camera.alertSeverity === "Red").length, face: cameras.filter((camera) => camera.faceIdentification === "Enabled").length };
   const openCreate = () => { setEditingId(null); setForm({ ...emptyCamera }); setShowForm(true); };
   const openEdit = (camera: CameraRecord) => { setEditingId(camera.id); setForm({ ...camera }); setShowForm(true); };
@@ -1129,6 +1130,15 @@ function UnavailablePage({ label, notify }: { label: string; notify: Notify }) {
   return <main className="mx-auto flex min-h-[100dvh] max-w-[1420px] items-center justify-center px-5 pt-[54px]"><div className="control-surface max-w-[420px] rounded-[7px] p-8 text-center"><div className="mx-auto flex h-11 w-11 items-center justify-center rounded-[5px] bg-cyan-500/10 text-cyan-400"><MonitorCog size={20} /></div><h1 className="mt-4 text-[16px] font-semibold text-slate-100">{label}</h1><p className="mt-2 text-[11px] leading-5 text-slate-500">This module is staged for the HRS Tech operations environment. User Management and Platform Requirements are ready in this build.</p><Button onClick={() => notify("Returning to User Management.", "info")} kind="primary" testId="button-return-users">Return to User Management</Button></div></main>;
 }
 
+function LiveCameraPanel({ notify }: { notify: Notify }) {
+  const [cameras, setCameras] = useState<CameraRecord[]>(cameraSeed);
+  const [department, setDepartment] = useState("All departments");
+  useEffect(() => { listCameras().then((records) => { if (records.length > 0) setCameras(records); }).catch(() => undefined); }, []);
+  const departments = Array.from(new Set(cameras.map((camera) => camera.department)));
+  const liveCameras = cameras.filter((camera) => camera.health !== "Offline" && (department === "All departments" || camera.department === department));
+  return <section className="control-surface mx-auto max-w-[1420px] px-4 pb-4 sm:px-6 lg:px-8" data-testid="section-live-cameras"><div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 px-3.5 py-3"><div><h2 className="text-[12px] font-semibold text-slate-200">Live Camera View</h2><p className="mt-0.5 text-[9px] text-slate-600">{department} · {liveCameras.length} live-capable camera{liveCameras.length === 1 ? "" : "s"}</p></div><label className="flex items-center gap-2 text-[9px] text-slate-500">Department<select value={department} onChange={(event) => setDepartment(event.target.value)} className="h-8 rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-300" data-testid="select-live-camera-department"><option>All departments</option>{departments.map((item) => <option key={item}>{item}</option>)}</select></label></div>{liveCameras.length > 0 ? <div className="grid gap-2.5 p-3 sm:grid-cols-2 xl:grid-cols-3">{liveCameras.map((camera) => <article key={camera.id} className="overflow-hidden rounded-[6px] border border-slate-800 bg-[#0a1421]" data-testid={`live-camera-${camera.id}`}><div className="relative aspect-video overflow-hidden bg-[#102538]">{/^https?:\/\//i.test(camera.streamUrl) ? <video src={camera.streamUrl} autoPlay muted playsInline className="h-full w-full object-cover" /> : <div className="absolute inset-0" style={{ backgroundImage: "linear-gradient(rgba(30, 213, 190, .08) 1px, transparent 1px), linear-gradient(90deg, rgba(30, 213, 190, .08) 1px, transparent 1px)", backgroundSize: "24px 24px" }}><div className="absolute inset-x-0 top-1/3 h-px animate-pulse bg-cyan-300/50" /><div className="absolute inset-0 flex items-center justify-center"><CameraIcon size={28} className="text-cyan-300/50" /></div></div>}<div className="absolute left-2 top-2 flex items-center gap-1.5 rounded bg-[#050a11]/75 px-2 py-1 text-[9px] font-semibold text-emerald-300"><span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />LIVE</div><span className="absolute right-2 top-2 rounded bg-[#050a11]/75 px-2 py-1 text-[9px] text-slate-300">{camera.health}</span></div><div className="flex items-center justify-between px-2.5 py-2"><div><div className="text-[10px] font-semibold text-slate-200">{camera.name}</div><div className="mt-0.5 text-[9px] text-slate-600">{camera.department} · {camera.zone}</div></div><button onClick={() => notify(`${camera.name} live feed selected.`, "info")} className="rounded p-1.5 text-slate-500 hover:bg-slate-800 hover:text-cyan-300" aria-label={`Select live feed for ${camera.name}`}><MonitorCog size={13} /></button></div></article>)}</div> : <div className="flex min-h-[120px] items-center justify-center px-4 text-center text-[10px] text-slate-600">No live-capable cameras match the selected department.</div>}</section>;
+}
+
 function DashboardShell() {
   const [sidebarCompact, setSidebarCompact] = useState(true);
   const [notice, setNotice] = useState<{ message: string; tone: NoticeTone } | null>(null);
@@ -1154,7 +1164,7 @@ function DashboardShell() {
           <Route path="/analytics"><AnalyticsPage /></Route>
           <Route path="/settings"><SettingsSnapshotPage notify={notify} /></Route>
           <Route path="/monitoring"><MonitoringPage notify={notify} /></Route>
-          <Route path="/cameras"><CameraPage notify={notify} /></Route>
+          <Route path="/cameras"><><CameraPage notify={notify} /><LiveCameraPanel notify={notify} /></></Route>
           <Route path="/controllers"><ControllersPage notify={notify} /></Route>
           <Route path="/areas"><AreasPage notify={notify} /></Route>
           <Route path="/logical-areas"><LogicalAreasPage /></Route>
