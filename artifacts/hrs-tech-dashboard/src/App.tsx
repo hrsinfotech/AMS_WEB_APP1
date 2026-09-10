@@ -215,6 +215,7 @@ function Sidebar({ compact, onClose, notify }: { compact: boolean; onClose: () =
 
 function Topbar({ onMenu, notify }: { onMenu: () => void; notify: Notify }) {
   const [search, setSearch] = useState("");
+  const [location, setLocation] = useState("HQ — North Wing");
   return (
     <header className="fixed inset-x-0 top-0 z-30 flex h-[54px] items-center border-b border-slate-800/80 bg-[#0b1421]/95 px-3 backdrop-blur md:left-[232px] md:px-5">
       <button className="mr-3 rounded p-1.5 text-slate-400 hover:bg-slate-800 hover:text-slate-100 md:hidden" onClick={onMenu} data-testid="button-open-sidebar" aria-label="Open navigation"><Menu size={18} /></button>
@@ -223,7 +224,16 @@ function Topbar({ onMenu, notify }: { onMenu: () => void; notify: Notify }) {
         <input value={search} onChange={(event) => setSearch(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && search) notify(`Searching the platform for “${search}”.`, "info"); }} className="h-8 w-full rounded-[4px] border border-slate-800 bg-[#111e2e] pl-9 pr-3 text-[11px] text-slate-200 outline-none placeholder:text-slate-600 focus:border-cyan-500/60" placeholder="Search users, credentials, devices, reports..." data-testid="input-global-search" />
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <button className="hidden h-8 items-center gap-2 rounded-[4px] border border-slate-800 bg-[#111e2e] px-3 text-[10px] text-slate-300 hover:border-slate-700 sm:flex" onClick={() => notify("North Wing control context selected.", "info")} data-testid="button-location-selector">HQ — North Wing <ChevronDown size={12} className="text-slate-500" /></button>
+        <label className="relative hidden sm:block">
+          <select value={location} onChange={(event) => { setLocation(event.target.value); notify(`${event.target.value} control context selected.`, "info"); }} className="h-8 appearance-none rounded-[4px] border border-slate-800 bg-[#111e2e] py-0 pl-3 pr-8 text-[10px] text-slate-300 outline-none hover:border-slate-700 focus:border-cyan-500/60" data-testid="select-location-filter" aria-label="Filter by location">
+            <option>All</option>
+            <option>HQ — North Wing</option>
+            <option>HQ — South Wing</option>
+            <option>HQ — East Wing</option>
+            <option>HQ — West Wing</option>
+          </select>
+          <ChevronDown size={12} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-slate-500" />
+        </label>
         <div className="hidden rounded-[4px] border border-slate-800 bg-[#111e2e] px-2.5 py-[7px] text-[9px] font-semibold tracking-[.08em] text-slate-500 lg:block">WIREFRAME</div>
         <div className="rounded-[4px] bg-[#18d4bc] px-2.5 py-[7px] text-[9px] font-bold tracking-[.08em] text-[#062d31]">PROTOTYPE</div>
         <button className="relative rounded p-1.5 text-slate-500 hover:bg-slate-800 hover:text-slate-200" onClick={() => notify("No new platform alerts.", "info")} data-testid="button-alerts" aria-label="View alerts"><Bell size={15} /><span className="absolute right-1 top-1 h-1.5 w-1.5 rounded-full bg-rose-400" /></button>
@@ -489,6 +499,7 @@ function UserManagementPage({ notify }: { notify: Notify }) {
   const [status, setStatus] = useState("All Statuses");
   const [visitingOnly, setVisitingOnly] = useState(false);
   const [selected, setSelected] = useState<string[]>([]);
+  const [bulkActionsOpen, setBulkActionsOpen] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [draft, setDraft] = useState({ name: "", department: "Facilities", title: "", type: "Employee" as UserRecord["type"] });
   const [page, setPage] = useState(1);
@@ -516,6 +527,20 @@ function UserManagementPage({ notify }: { notify: Notify }) {
 
   const toggleUser = (id: string) => setSelected((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
   const toggleAll = () => setSelected(allSelected ? [] : filteredUsers.map((user) => user.id));
+  const applyBulkStatus = (nextStatus: UserRecord["status"]) => {
+    if (selected.length === 0) {
+      notify("Select at least one user before applying a bulk action.", "warning");
+      return;
+    }
+    const selectedIds = new Set(selected);
+    setUsers((current) => current.map((user) => selectedIds.has(user.id) ? { ...user, status: nextStatus } : user));
+    if (apiConnected) {
+      Promise.all([...selectedIds].map((id) => updateUserStatus(id, nextStatus))).catch(() => notify("Some status changes could not be saved.", "warning"));
+    }
+    notify(`${selected.length} users ${nextStatus === "Active" ? "activated" : "suspended"}.`, nextStatus === "Active" ? "success" : "warning");
+    setSelected([]);
+    setBulkActionsOpen(false);
+  };
   const toggleStatus = (id: string) => {
     const changed = users.find((user) => user.id === id);
     if (!changed) return;
@@ -551,7 +576,7 @@ function UserManagementPage({ notify }: { notify: Notify }) {
 
   return (
     <main className="mx-auto max-w-[1420px] px-4 pb-10 pt-[78px] sm:px-6 lg:px-8">
-      <SectionHeading eyebrow="HRS TECH VIEW · MODULE 1" title="User Management" description="Central identity system of record for employees, contractors, security staff, and other associated individuals." actions={<><Button onClick={() => notify("Bulk action menu opened for the directory.", "info")} icon={UsersRound} testId="button-bulk-actions">Bulk Actions</Button><Button onClick={() => setModalOpen(true)} icon={Plus} kind="primary" testId="button-add-user">Add User</Button></>} />
+      <SectionHeading eyebrow="HRS TECH VIEW · MODULE 1" title="User Management" description="Central identity system of record for employees, contractors, security staff, and other associated individuals." actions={<><div className="relative"><Button onClick={() => setBulkActionsOpen((current) => !current)} icon={UsersRound} testId="button-bulk-actions">Bulk Actions</Button>{bulkActionsOpen && <div className="absolute right-0 top-9 z-20 min-w-[150px] rounded-[5px] border border-slate-700 bg-[#111e2e] p-1 shadow-xl" role="menu"><button onClick={() => applyBulkStatus("Active")} className="block w-full rounded px-2.5 py-2 text-left text-[10px] text-slate-300 hover:bg-slate-800" role="menuitem">Activate selected</button><button onClick={() => applyBulkStatus("Suspended")} className="block w-full rounded px-2.5 py-2 text-left text-[10px] text-slate-300 hover:bg-slate-800" role="menuitem">Suspend selected</button><button onClick={() => { setSelected([]); setBulkActionsOpen(false); }} className="block w-full rounded px-2.5 py-2 text-left text-[10px] text-slate-500 hover:bg-slate-800 hover:text-slate-300" role="menuitem">Clear selection</button></div>}</div><Button onClick={() => setModalOpen(true)} icon={Plus} kind="primary" testId="button-add-user">Add User</Button></>} />
       <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4 stagger-in">
         <StatCard label="TOTAL USERS" value={String(users.length)} detail="+3 this month" icon={Users} />
         <StatCard label="ACTIVE" value={String(users.filter((user) => user.status === "Active").length)} detail="Access currently enabled" tone="good" icon={UserCheck} />
