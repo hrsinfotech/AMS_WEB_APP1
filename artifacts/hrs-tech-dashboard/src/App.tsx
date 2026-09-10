@@ -271,7 +271,7 @@ function SectionHeading({ eyebrow, title, description, actions }: { eyebrow: str
   );
 }
 
-function Button({ children, onClick, kind = "secondary", icon: Icon, testId, disabled = false, type = "button" }: { children: React.ReactNode; onClick: () => void; kind?: "primary" | "secondary" | "quiet" | "danger"; icon?: LucideIcon; testId: string; disabled?: boolean; type?: "button" | "submit" }) {
+function Button({ children, onClick, kind = "secondary", icon: Icon, testId, disabled = false, type = "button" }: { children: React.ReactNode; onClick?: () => void; kind?: "primary" | "secondary" | "quiet" | "danger"; icon?: LucideIcon; testId: string; disabled?: boolean; type?: "button" | "submit" }) {
   return <button type={type} disabled={disabled} onClick={onClick} className={`inline-flex h-8 items-center justify-center gap-1.5 rounded-[4px] px-3 text-[10px] font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${kind === "primary" ? "bg-[#12cdb7] text-[#062d31] hover:bg-[#27e2ca]" : kind === "danger" ? "border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/15" : kind === "quiet" ? "text-slate-500 hover:bg-slate-800 hover:text-slate-200" : "border border-slate-700/90 bg-[#152235] text-slate-300 hover:border-slate-600 hover:bg-[#1a2b42]"}`} data-testid={testId}>{Icon && <Icon size={13} />} {children}</button>;
 }
 
@@ -705,13 +705,39 @@ function ModuleTablePage({
 }
 
 function MobileUsersPage({ notify }: { notify: Notify }) {
-  const rows = [
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
+  const [assignment, setAssignment] = useState({ privilege: "Mobile App Access", accessGroup: "", effectiveDate: "", expiresOn: "", reason: "" });
+  const [assignmentError, setAssignmentError] = useState("");
+  const [rows, setRows] = useState([
     { user: "Amaya Rao", appPrivilege: "Active", ble: "Active", appCount: "2", bleCount: "1", apple: "1", google: "0" },
     { user: "Daniel Osei", appPrivilege: "Active", ble: "Not Enabled", appCount: "1", bleCount: "0", apple: "0", google: "1" },
     { user: "Marta Kowalski", appPrivilege: "Not Enabled", ble: "Not Enabled", appCount: "0", bleCount: "0", apple: "0", google: "0" },
     { user: "Fatima Al-Sayed", appPrivilege: "Active", ble: "Active", appCount: "1", bleCount: "1", apple: "1", google: "1" },
-  ];
-  return <ModuleTablePage notify={notify} module="Mobile Users" title="Manage Mobile Users" eyebrow="HRS TECH VIEW · MODULE 2" description="App access, BLE credentials, and digital wallet issuance for mobile-registered users." action="Bulk Assign Privilege" stats={[{ label: "APP PRIVILEGE", value: "3", detail: "of 4 users", tone: "good" }, { label: "BLE CREDENTIALS", value: "2", detail: "registered devices" }, { label: "APPLE WALLET", value: "2", detail: "issued passes" }, { label: "GOOGLE WALLET", value: "2", detail: "issued passes" }]} columns={[{ key: "user", label: "USER" }, { key: "appPrivilege", label: "APP PRIVILEGE" }, { key: "ble", label: "BLE CREDENTIAL" }, { key: "appCount", label: "APP COUNT" }, { key: "bleCount", label: "BLE COUNT" }, { key: "apple", label: "APPLE WALLET" }, { key: "google", label: "GOOGLE WALLET" }]} rows={rows} searchPlaceholder="Search by name or ID..." />;
+  ]);
+
+  const openAssignment = () => {
+    setAssignmentError("");
+    setAssignmentOpen(true);
+  };
+
+  const submitAssignment = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (selectedUsers.length === 0 || !assignment.accessGroup || !assignment.effectiveDate) {
+      setAssignmentError("Select at least one user, an access group, and an effective date.");
+      return;
+    }
+    setRows((current) => current.map((row) => selectedUsers.includes(row.user) ? { ...row, appPrivilege: "Active" } : row));
+    notify(`${assignment.privilege} assigned to ${selectedUsers.length} mobile user${selectedUsers.length === 1 ? "" : "s"}.`, "success");
+    setAssignmentOpen(false);
+    setSelectedUsers([]);
+    setAssignment({ privilege: "Mobile App Access", accessGroup: "", effectiveDate: "", expiresOn: "", reason: "" });
+  };
+
+  return <>
+    <ModuleTablePage notify={notify} module="Mobile Users" title="Manage Mobile Users" eyebrow="HRS TECH VIEW · MODULE 2" description="App access, BLE credentials, and digital wallet issuance for mobile-registered users." action="Bulk Assign Privilege" onAction={openAssignment} stats={[{ label: "APP PRIVILEGE", value: String(rows.filter((row) => row.appPrivilege === "Active").length), detail: `of ${rows.length} users`, tone: "good" }, { label: "BLE CREDENTIALS", value: "2", detail: "registered devices" }, { label: "APPLE WALLET", value: "2", detail: "issued passes" }, { label: "GOOGLE WALLET", value: "2", detail: "issued passes" }]} columns={[{ key: "user", label: "USER" }, { key: "appPrivilege", label: "APP PRIVILEGE" }, { key: "ble", label: "BLE CREDENTIAL" }, { key: "appCount", label: "APP COUNT" }, { key: "bleCount", label: "BLE COUNT" }, { key: "apple", label: "APPLE WALLET" }, { key: "google", label: "GOOGLE WALLET" }]} rows={rows} searchPlaceholder="Search by name or ID..." />
+    {assignmentOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#050a11]/75 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="bulk-assign-title" data-testid="dialog-bulk-assign-privilege"><form onSubmit={submitAssignment} className="control-surface w-full max-w-[500px] rounded-[7px] p-5 shadow-2xl"><div className="mb-5 flex items-start justify-between"><div><div className="mono text-[9px] tracking-[.16em] text-cyan-400">MOBILE ACCESS ACTION</div><h2 id="bulk-assign-title" className="mt-1 text-[16px] font-semibold text-slate-100">Bulk assign privilege</h2><p className="mt-1 text-[10px] text-slate-500">Create a traceable mobile-access assignment for selected users.</p></div><button type="button" onClick={() => setAssignmentOpen(false)} className="rounded p-1 text-slate-500 hover:bg-slate-800 hover:text-slate-200" aria-label="Close bulk assignment dialog" data-testid="button-close-bulk-assign"><X size={16} /></button></div><div className="space-y-3"><fieldset><legend className="mb-1.5 text-[10px] font-medium text-slate-400">Users <span className="text-rose-300">*</span></legend><div className="grid grid-cols-2 gap-2 rounded-[4px] border border-slate-700 bg-[#0d1725] p-2">{rows.map((row) => <label key={row.user} className="flex items-center gap-2 rounded px-2 py-1.5 text-[10px] text-slate-300 hover:bg-slate-800"><input type="checkbox" checked={selectedUsers.includes(row.user)} onChange={() => setSelectedUsers((current) => current.includes(row.user) ? current.filter((user) => user !== row.user) : [...current, row.user])} className="accent-cyan-400" data-testid={`checkbox-assign-${row.user.toLowerCase().replaceAll(" ", "-")}`} />{row.user}</label>)}</div></fieldset><div className="grid grid-cols-2 gap-3"><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Privilege <span className="text-rose-300">*</span></span><select value={assignment.privilege} onChange={(event) => setAssignment({ ...assignment, privilege: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200 outline-none focus:border-cyan-400/60" data-testid="select-assign-privilege"><option>Mobile App Access</option><option>BLE Credential Access</option><option>Mobile App + BLE Access</option></select></label><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Access group <span className="text-rose-300">*</span></span><select required value={assignment.accessGroup} onChange={(event) => setAssignment({ ...assignment, accessGroup: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200 outline-none focus:border-cyan-400/60" data-testid="select-assign-access-group"><option value="">Choose group</option><option>Facilities — Standard</option><option>IT — Server Rooms</option><option>Security — Full</option><option>Contractor — Mechanical</option></select></label></div><div className="grid grid-cols-2 gap-3"><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Effective date <span className="text-rose-300">*</span></span><input required type="date" value={assignment.effectiveDate} onChange={(event) => setAssignment({ ...assignment, effectiveDate: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200 outline-none focus:border-cyan-400/60" data-testid="input-assign-effective-date" /></label><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Expiry date</span><input type="date" min={assignment.effectiveDate} value={assignment.expiresOn} onChange={(event) => setAssignment({ ...assignment, expiresOn: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-2 text-[10px] text-slate-200 outline-none focus:border-cyan-400/60" data-testid="input-assign-expiry-date" /></label></div><label className="block"><span className="mb-1.5 block text-[10px] font-medium text-slate-400">Reason or change ticket</span><input value={assignment.reason} onChange={(event) => setAssignment({ ...assignment, reason: event.target.value })} className="h-9 w-full rounded-[4px] border border-slate-700 bg-[#0d1725] px-3 text-[10px] text-slate-200 outline-none focus:border-cyan-400/60" placeholder="e.g. CHG-10482 · North Wing rollout" data-testid="input-assign-reason" /></label>{assignmentError && <p className="rounded-[4px] border border-rose-500/30 bg-rose-500/10 px-2.5 py-2 text-[10px] text-rose-300" role="alert" data-testid="text-assign-error">{assignmentError}</p>}</div><div className="mt-5 flex justify-end gap-2 border-t border-slate-800 pt-4"><Button type="button" onClick={() => setAssignmentOpen(false)} kind="quiet" testId="button-cancel-bulk-assign">Cancel</Button><Button type="submit" icon={Check} kind="primary" testId="button-submit-bulk-assign">Assign privilege</Button></div></form></div>}
+  </>;
 }
 
 function CredentialsPage({ notify }: { notify: Notify }) {
