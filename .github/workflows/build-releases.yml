@@ -1,0 +1,94 @@
+name: Build desktop and Android releases
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: 24
+
+jobs:
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: artifacts/hrs-tech-dashboard
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+
+      - name: Build release APK
+        run: pnpm run build:android:apk
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: hrs-tech-ams-android-apk
+          path: artifacts/hrs-tech-dashboard/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+  windows:
+    name: Windows desktop installer
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: artifacts/hrs-tech-dashboard
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        working-directory: .
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows installer
+        run: pnpm run build:windows
+
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: hrs-tech-ams-windows-installer
+          path: artifacts/hrs-tech-dashboard/release/*.exe
+          if-no-files-found: error

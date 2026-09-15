@@ -12,7 +12,7 @@
     "desktop:dev": "pnpm run build && electron .",
     "build:windows": "node scripts/build-windows.mjs",
     "build:android": "pnpm run build && npx cap sync android && npx cap open android",
-    "build:android:apk": "pnpm run build && npx cap sync android && cd android && ./gradlew assembleRelease && cd ..",
+    "build:android:apk": "node scripts/build-android.mjs",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },

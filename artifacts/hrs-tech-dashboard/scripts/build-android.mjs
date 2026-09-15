@@ -11,9 +11,20 @@ const projectRoot = path.join(__dirname, '..');
 console.log('🚀 Building HRS Tech AMS for Android...\n');
 
 try {
+  const buildEnv = {
+    ...process.env,
+    BASE_PATH: process.env.BASE_PATH || '/',
+    NODE_ENV: 'production',
+    PORT: process.env.PORT || '24619',
+  };
+
   // Build web assets
   console.log('📦 Building web assets...');
-  execSync('npm run build', { cwd: projectRoot, stdio: 'inherit' });
+  execSync('npm run build', {
+    cwd: projectRoot,
+    env: buildEnv,
+    stdio: 'inherit',
+  });
 
   // Check if android directory exists, if not initialize Capacitor
   const androidDir = path.join(projectRoot, 'android');
