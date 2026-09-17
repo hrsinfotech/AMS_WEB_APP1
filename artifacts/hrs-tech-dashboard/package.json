@@ -28,7 +28,6 @@
     "files": [
       "dist/public/**/*",
       "electron/main.cjs",
-      "electron/install-runtime.ps1",
       "package.json"
     ],
     "extraResources": [
@@ -47,6 +46,10 @@
       {
         "from": "../../Dockerfile.api",
         "to": "runtime/backend-java/Dockerfile.api"
+      },
+      {
+        "from": "electron/install-runtime.ps1",
+        "to": "install-runtime.ps1"
       }
     ],
     "win": {

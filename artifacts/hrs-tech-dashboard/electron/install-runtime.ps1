@@ -1,8 +1,23 @@
 $ErrorActionPreference = 'Stop'
 
+function Get-DockerExecutable {
+  $candidates = @(
+    (Join-Path ${env:ProgramFiles} 'Docker\Docker\resources\bin\docker.exe'),
+    (Join-Path ${env:ProgramFiles} 'Docker\Docker\resources\cli-plugins\docker.exe'),
+    (Join-Path ${env:USERPROFILE} '.docker\bin\docker.exe')
+  )
+
+  return $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+}
+
 function Test-DockerAvailable {
+  $docker = Get-DockerExecutable
+  if (-not $docker) {
+    return $false
+  }
+
   try {
-    docker version --format '{{.Server.Version}}' 2>$null | Out-Null
+    & $docker version --format '{{.Server.Version}}' 2>$null | Out-Null
     return $LASTEXITCODE -eq 0
   } catch {
     return $false
@@ -35,8 +50,12 @@ Invoke-WebRequest -Uri $downloadUrl -OutFile $installer
 Start-Process -FilePath $installer -ArgumentList 'install', '--quiet', '--accept-license' -Wait
 Remove-Item $installer -Force -ErrorAction SilentlyContinue
 
-$dockerDesktop = Join-Path ${env:ProgramFiles} 'Docker\Docker\Docker Desktop.exe'
-if (Test-Path $dockerDesktop) {
+$dockerDesktopCandidates = @(
+  (Join-Path ${env:ProgramFiles} 'Docker\Docker\Docker Desktop.exe'),
+  (Join-Path ${env:ProgramFiles(x86)} 'Docker\Docker\Docker Desktop.exe')
+)
+$dockerDesktop = $dockerDesktopCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+if ($dockerDesktop) {
   Start-Process -FilePath $dockerDesktop -WindowStyle Hidden
 }
 
