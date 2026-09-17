@@ -1,15 +1,41 @@
-const { app, BrowserWindow, shell } = require("electron");
+const { app, BrowserWindow, dialog, shell } = require("electron");
 const { spawn } = require("node:child_process");
+const fs = require("node:fs");
 const path = require("node:path");
 
 let composeProcess;
 
+function findDockerExecutable() {
+  const candidates = process.platform === "win32"
+    ? [
+        path.join(process.env.ProgramFiles || "C:\\Program Files", "Docker", "Docker", "resources", "bin", "docker.exe"),
+        path.join(process.env.ProgramFiles || "C:\\Program Files", "Docker", "Docker", "resources", "cli-plugins", "docker.exe"),
+        path.join(process.env.USERPROFILE || "", ".docker", "bin", "docker.exe"),
+      ]
+    : ["docker"];
+
+  return candidates.find((candidate) => candidate === "docker" || fs.existsSync(candidate));
+}
+
 function startRuntime() {
   const runtimePath = path.join(process.resourcesPath, "runtime");
-  composeProcess = spawn("docker", ["compose", "up", "-d", "--build"], {
+  const dockerExecutable = findDockerExecutable();
+  if (!dockerExecutable) {
+    dialog.showMessageBox({
+      type: "warning",
+      title: "Docker Desktop is required",
+      message: "Docker Desktop was not found. Start Docker Desktop and reopen HRS Tech Security Dashboard.",
+    });
+    return;
+  }
+
+  composeProcess = spawn(dockerExecutable, ["compose", "up", "-d", "--build"], {
     cwd: runtimePath,
     windowsHide: true,
     stdio: "ignore",
+  });
+  composeProcess.on("error", (error) => {
+    dialog.showErrorBox("Unable to start application services", `Docker could not start the HRS services.\n\n${error.message}`);
   });
 }
 
@@ -36,8 +62,8 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
-  startRuntime();
   createWindow();
+  startRuntime();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
