@@ -19,5 +19,8 @@ function run(command, args) {
   if (result.status !== 0) process.exit(result.status ?? 1);
 }
 
-run("pnpm", ["run", "build"]);
+const packageManager = process.platform === "win32" ? "corepack" : "pnpm";
+const packageManagerArgs = process.platform === "win32" ? ["pnpm"] : [];
+
+run(packageManager, [...packageManagerArgs, "run", "build"]);
 run("electron-builder", ["--win", "nsis", "--x64"]);

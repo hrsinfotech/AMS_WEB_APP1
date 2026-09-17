@@ -1,6 +1,7 @@
 {
   "name": "@workspace/hrs-tech-dashboard",
   "version": "0.0.0",
+  "packageManager": "pnpm@10.15.0",
   "description": "HRS Tech Security Dashboard desktop application",
   "author": "HRS Infotech",
   "private": true,
@@ -20,13 +21,33 @@
     "appId": "com.hrsinfotech.securitydashboard",
     "productName": "HRS Tech Security Dashboard",
     "artifactName": "HRS-Tech-Security-Dashboard-Setup.exe",
+    "icon": "public/hrs-tech-logo-256.png",
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/public/**/*",
       "electron/main.cjs",
+      "electron/install-runtime.ps1",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "installer/runtime",
+        "to": "runtime"
+      },
+      {
+        "from": "../../backend-java",
+        "to": "runtime/backend-java",
+        "filter": [
+          "pom.xml",
+          "src/**/*"
+        ]
+      },
+      {
+        "from": "../../Dockerfile.api",
+        "to": "runtime/backend-java/Dockerfile.api"
+      }
     ],
     "win": {
       "target": [
@@ -42,7 +63,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "shortcutName": "HRS Tech Security Dashboard"
+      "shortcutName": "HRS Tech Security Dashboard",
+      "include": "installer/installer.nsh"
     }
   },
   "devDependencies": {

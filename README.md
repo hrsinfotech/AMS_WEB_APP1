@@ -63,6 +63,8 @@ pnpm --filter @workspace/hrs-tech-dashboard run build:windows
 
 The installer is created under `artifacts/hrs-tech-dashboard/release/`.
 
+The installer includes the Java API source and Compose configuration. During setup it checks for Docker Desktop and downloads the official Docker Desktop installer when it is missing. Java and PostgreSQL run inside the application-managed containers, so they do not need separate client installations. Docker Desktop may require administrator approval and a Windows restart for WSL 2.
+
 ## Android Mobile App
 
 ### Prerequisites

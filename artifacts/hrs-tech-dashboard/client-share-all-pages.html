@@ -1,0 +1,570 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRS Tech Security Platform</title>
+    <style>
+      :root {
+        --bg: #09131d;
+        --bg-2: #0d1823;
+        --surface: #111f2d;
+        --surface-2: #0d1a27;
+        --surface-3: #142738;
+        --border: rgba(148, 163, 184, 0.14);
+        --text: #edf3fa;
+        --muted: #8aa0b8;
+        --muted-2: #688299;
+        --cyan: #2fe1d2;
+        --cyan-2: #20b7aa;
+        --blue: #4ea4ff;
+        --green: #3ad29d;
+        --amber: #f7c76a;
+        --red: #f56a6a;
+      }
+
+      * { box-sizing: border-box; }
+      html, body { margin: 0; min-height: 100%; background: linear-gradient(180deg, #08141d 0%, #0d1a27 100%); color: var(--text); font-family: Inter, "Segoe UI", Arial, sans-serif; }
+      body { min-height: 100vh; }
+      button, select, input { font: inherit; }
+
+      .page { display: flex; min-height: 100vh; }
+      .sidebar {
+        width: 232px; background: #0b1421; border-right: 1px solid var(--border); padding: 12px 10px 18px;
+      }
+      .brand { display: flex; align-items: center; gap: 10px; margin: 8px 8px 18px; padding: 6px 4px; }
+      .brand-mark {
+        width: 32px; height: 32px; border-radius: 6px; background: linear-gradient(135deg, #1a6af2, #1bc4d0); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff;
+      }
+      .brand-name { font-size: 12px; font-weight: 800; letter-spacing: 0.1em; }
+      .brand-sub { display: block; margin-top: 3px; font-size: 8px; letter-spacing: 0.12em; color: var(--muted-2); }
+      .nav-group { margin-top: 18px; }
+      .nav-label { padding: 0 12px; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; color: #5a7188; text-transform: uppercase; }
+      .nav-list { list-style: none; margin: 10px 0 0; padding: 0; }
+      .nav-item {
+        display: flex; align-items: center; gap: 10px; padding: 9px 10px; margin: 2px 4px; border-radius: 5px; color: #a9bbce; font-size: 11px; border: 1px solid transparent; cursor: pointer; user-select: none;
+      }
+      .nav-item.active {
+        background: rgba(9, 106, 102, 0.38); border-color: rgba(32, 183, 170, 0.25); color: #25e0c7; box-shadow: inset 2px 0 0 #20d7be;
+      }
+      .nav-item.warning { background: rgba(255, 88, 88, 0.06); }
+      .nav-dot { width: 12px; height: 12px; border-radius: 3px; background: rgba(148,163,184,.15); display: inline-block; }
+      .nav-item.active .nav-dot { background: rgba(47,225,210,.22); }
+      .nav-badge { margin-left: auto; background: rgba(249,113,113,.12); color: #fca5a5; border-radius: 9px; font-size: 9px; padding: 2px 6px; }
+      .user-card {
+        margin-top: 30px; display: flex; align-items: center; gap: 10px; background: rgba(17,30,46,.9); border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px;
+      }
+      .avatar-mini { width: 28px; height: 28px; border-radius: 50%; background: rgba(34,211,238,.18); border: 1px solid rgba(34,211,238,.35); color: #7dd3fc; font-size: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; }
+      .user-card strong { display: block; font-size: 11px; }
+      .user-card span { display: block; font-size: 9px; color: var(--muted-2); }
+
+      .content { flex: 1; min-width: 0; }
+      .topbar {
+        display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 18px 0 20px; border-bottom: 1px solid var(--border); background: rgba(11,20,33,.96); position: sticky; top: 0; z-index: 5;
+      }
+      .search {
+        width: min(500px, 42vw); height: 32px; border-radius: 4px; border: 1px solid var(--border); background: #111f2d; color: var(--text); padding: 0 12px; font-size: 11px; opacity: 0.9;
+      }
+      .toolbar { display: flex; align-items: center; gap: 12px; }
+      .location {
+        height: 32px; border-radius: 5px; border: 1px solid var(--border); background: #111f2d; color: #d3dfed; padding: 0 30px 0 12px; font-size: 10px;
+      }
+      .badge-tag {
+        display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; background: rgba(24,212,188,.12); color: #25e0c7; height: 24px; padding: 0 10px; font-size: 9px; font-weight: 800; letter-spacing: 0.08em;
+      }
+
+      .main { padding: 22px; }
+      .headline-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+      .headline h1 { margin: 0; font-size: 20px; letter-spacing: -0.02em; }
+      .headline p { margin: 6px 0 0; color: var(--muted); font-size: 12px; }
+      .header-actions { display: flex; gap: 10px; }
+      .button { border: 1px solid var(--border); background: rgba(17,31,45,.9); color: var(--text); padding: 8px 12px; border-radius: 5px; font-size: 11px; font-weight: 600; cursor: pointer; }
+      .button.primary { background: linear-gradient(135deg, #0c6c9d, #0d8e8d); border-color: rgba(94,234,212,.3); color: white; }
+
+      .pages { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+      .page-tab {
+        background: rgba(17,31,45,.9); border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 999px; font-size: 11px; cursor: pointer;
+      }
+      .page-tab.active {
+        background: linear-gradient(135deg, #0c6c9d, #0d8e8d); border-color: rgba(94,234,212,.3); color: white;
+      }
+
+      .screen { display: none; }
+      .screen.active { display: block; }
+
+      .stats-grid {
+        display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 18px;
+      }
+      .card {
+        background: linear-gradient(180deg, rgba(15,27,39,.98), rgba(12,21,31,.98)); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 14px 32px rgba(2,6,23,.35);
+      }
+      .stat-card { min-height: 96px; position: relative; overflow: hidden; padding: 14px 16px 12px; }
+      .stat-card .icon { position: absolute; right: -8px; top: -8px; font-size: 60px; color: rgba(148,163,184,.08); }
+      .label { font-size: 9px; color: var(--muted-2); letter-spacing: .1em; text-transform: uppercase; }
+      .value { margin-top: 12px; font-size: 24px; font-weight: 700; letter-spacing: -0.04em; }
+      .inset { color: var(--muted); font-size: 10px; margin-top: 8px; }
+
+      .grid { display: grid; grid-template-columns: 1.7fr 1fr; gap: 18px; margin-top: 18px; }
+      .panel { padding: 16px 16px 12px; }
+      .panel-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+      .panel-header h3 { margin: 0; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+      .tiny-toggle { font-size: 10px; color: var(--muted); background: rgba(148,163,184,.06); border: 1px solid var(--border); border-radius: 999px; padding: 4px 8px; }
+
+      table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid rgba(148,163,184,.12); }
+      th { color: var(--muted-2); font-weight: 600; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; }
+      td { color: #dfeaf7; }
+      .user-pill { display: inline-flex; align-items: center; gap: 8px; }
+      .mini-avatar { width: 22px; height: 22px; border-radius: 50%; background: linear-gradient(135deg, rgba(34,211,238,.2), rgba(59,130,246,.2)); border: 1px solid rgba(56,189,248,.25); display: inline-flex; align-items: center; justify-content: center; font-size: 9px; color: #d4faff; }
+      .status { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 9px; font-weight: 700; }
+      .status.ok { background: rgba(58,210,157,.12); color: #7de4b4; }
+      .status.warn { background: rgba(247,199,106,.12); color: #f7c76a; }
+      .status.alert { background: rgba(245,106,106,.12); color: #f8a0a0; }
+
+      .event-list { list-style: none; margin: 0; padding: 0; }
+      .event-item { display: grid; grid-template-columns: 28px 1fr auto; gap: 10px; padding: 10px 0; border-bottom: 1px solid rgba(148,163,184,.12); }
+      .event-bullet { width: 28px; height: 28px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; background: rgba(59,130,246,.12); border: 1px solid rgba(96,165,250,.2); }
+      .event-time { color: var(--muted-2); font-size: 10px; }
+
+      .activity-box { padding: 16px; }
+      .bars { display: flex; align-items: flex-end; gap: 12px; height: 140px; margin-top: 18px; padding-top: 10px; }
+      .bar { flex: 1; border-radius: 8px 8px 4px 4px; background: linear-gradient(180deg, #49d1ff 0%, #1b7ce4 100%); opacity: 0.9; min-height: 30px; }
+      .bar:nth-child(2n) { background: linear-gradient(180deg, #7de4b4 0%, #1ba17b 100%); }
+      .bar:nth-child(3n) { background: linear-gradient(180deg, #f7d579 0%, #d98f30 100%); }
+      .legend { margin-top: 14px; display: flex; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 10px; }
+      .legend span { display: inline-flex; align-items: center; gap: 7px; }
+      .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+      .footer-note { margin-top: 20px; color: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; }
+      .module-tabs { display: flex; gap: 18px; overflow-x: auto; margin: -2px 0 14px; padding: 0 2px; border-bottom: 1px solid var(--border); }
+      .module-tab { flex: 0 0 auto; border: 0; border-bottom: 2px solid transparent; background: transparent; color: var(--muted); padding: 9px 0; font-size: 10px; cursor: pointer; }
+      .module-tab.active { border-color: var(--cyan); color: var(--cyan); font-weight: 700; }
+      .form-strip { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; background: rgba(20,39,56,.55); border: 1px solid var(--border); border-radius: 6px; }
+      .form-strip input, .form-strip select { height: 32px; min-width: 150px; border: 1px solid var(--border); border-radius: 4px; background: #0b1723; color: var(--text); padding: 0 9px; font-size: 10px; }
+      .map { position: relative; min-height: 250px; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background-color: #102538; background-image: linear-gradient(rgba(71,111,139,.25) 1px, transparent 1px), linear-gradient(90deg, rgba(71,111,139,.25) 1px, transparent 1px); background-size: 42px 42px; }
+      .map-pin { position: absolute; width: 13px; height: 13px; border: 2px solid #0b1723; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 12px rgba(47,225,210,.75); }
+      .camera-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .camera-feed { position: relative; min-height: 138px; overflow: hidden; border-radius: 5px; border: 1px solid var(--border); background: repeating-linear-gradient(0deg, rgba(47,225,210,.08) 0 1px, transparent 1px 14px), repeating-linear-gradient(90deg, rgba(47,225,210,.08) 0 1px, transparent 1px 14px), #102538; }
+      .camera-feed:after { content: "LIVE"; position: absolute; top: 9px; right: 9px; border-radius: 3px; background: rgba(245,106,106,.18); color: #fca5a5; padding: 4px 6px; font-size: 8px; font-weight: 700; }
+      .camera-label { position: absolute; bottom: 0; left: 0; right: 0; padding: 8px; background: linear-gradient(transparent, rgba(3,9,15,.9)); font-size: 10px; font-weight: 700; }
+      .requirement-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .requirement { padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: rgba(14,25,40,.8); }
+      .requirement strong { display: block; font-size: 11px; }
+      .requirement span { display: block; margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.5; }
+
+      @media (max-width: 980px) {
+        .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 760px) {
+        .page { display: block; }
+        .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+        .content { width: 100%; }
+        .stats-grid { grid-template-columns: 1fr; }
+        .headline-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .toolbar { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">H</div>
+          <div>
+            <div class="brand-name">HRS TECH</div>
+            <span class="brand-sub">SECURITY PLATFORM</span>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">HRS Tech View</div>
+          <ul class="nav-list">
+            <li class="nav-item active" data-target="users"><span class="nav-dot"></span> User Management</li>
+            <li class="nav-item" data-target="mobile-users"><span class="nav-dot"></span> Mobile Users</li>
+            <li class="nav-item" data-target="credentials"><span class="nav-dot"></span> Credential Management</li>
+            <li class="nav-item" data-target="access"><span class="nav-dot"></span> Access Management</li>
+            <li class="nav-item" data-target="attendance"><span class="nav-dot"></span> Attendance Management</li>
+            <li class="nav-item" data-target="visitors"><span class="nav-dot"></span> Visitor Management</li>
+            <li class="nav-item" data-target="reports"><span class="nav-dot"></span> Reports</li>
+            <li class="nav-item" data-target="requests"><span class="nav-dot"></span> Requests</li>
+            <li class="nav-item" data-target="analytics"><span class="nav-dot"></span> Dashboard Analytics</li>
+            <li class="nav-item" data-target="settings"><span class="nav-dot"></span> Settings</li>
+          </ul>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">Security View</div>
+          <ul class="nav-list">
+            <li class="nav-item" data-target="monitoring"><span class="nav-dot"></span> Real-Time Monitoring</li>
+            <li class="nav-item" data-target="cameras"><span class="nav-dot"></span> Camera</li>
+            <li class="nav-item" data-target="controllers"><span class="nav-dot"></span> Controller Management</li>
+            <li class="nav-item" data-target="areas"><span class="nav-dot"></span> Area Control</li>
+            <li class="nav-item" data-target="logical-areas"><span class="nav-dot"></span> Logical Area Control</li>
+            <li class="nav-item warning" data-target="alarms"><span class="nav-dot"></span> Alarm Management <span class="nav-badge">3</span></li>
+            <li class="nav-item" data-target="zone-draw"><span class="nav-dot"></span> Zone Draw</li>
+          </ul>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">Platform</div>
+          <ul class="nav-list"><li class="nav-item" data-target="requirements"><span class="nav-dot"></span> Cross-Cutting Requirements</li></ul>
+        </div>
+
+        <div class="user-card">
+          <div class="avatar-mini">PN</div>
+          <div>
+            <strong>Priya Nair</strong>
+            <span>Platform Administrator</span>
+          </div>
+        </div>
+      </aside>
+
+      <div class="content">
+        <header class="topbar">
+          <input class="search" value="Search users, credentials, devices, reports..." aria-label="Search" />
+          <div class="toolbar">
+            <select class="location" aria-label="Location">
+              <option>HQ — North Wing</option>
+              <option>HQ — South Wing</option>
+              <option>HQ — East Wing</option>
+            </select>
+            <span class="badge-tag">PROTOTYPE</span>
+            <span class="badge-tag" style="background: rgba(59,130,246,.12); color: #93c5fd;">WIREFRAME</span>
+          </div>
+        </header>
+
+        <main class="main">
+          <div class="headline-row">
+            <div class="headline">
+              <h1>Security Operations Dashboard</h1>
+              <p>Enterprise access, identity, and monitoring overview</p>
+            </div>
+            <div class="header-actions">
+              <button class="button">Export Report</button>
+              <button class="button primary">New Entry</button>
+            </div>
+          </div>
+
+          <section class="screen active" id="users">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">◔</div><div class="label">Total Users</div><div class="value">8.4K</div><div class="inset">+3 this month</div></div>
+              <div class="card stat-card"><div class="icon">◷</div><div class="label">Active</div><div class="value">6.9K</div><div class="inset">Access currently enabled</div></div>
+              <div class="card stat-card"><div class="icon">◫</div><div class="label">Suspended</div><div class="value">312</div><div class="inset">Requires review</div></div>
+              <div class="card stat-card"><div class="icon">◎</div><div class="label">Contractors</div><div class="value">1.1K</div><div class="inset">Time-bound access</div></div>
+            </div>
+
+            <div class="grid">
+              <div class="card panel">
+                <div class="panel-header"><h3>Access roster</h3><button class="tiny-toggle">Today</button></div>
+                <table>
+                  <thead>
+                    <tr><th>Member</th><th>Department</th><th>Access</th><th>Status</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><div class="user-pill"><span class="mini-avatar">AR</span>Amaya Rao</div></td><td>Facilities</td><td>Full Access</td><td><span class="status ok">Active</span></td></tr>
+                    <tr><td><div class="user-pill"><span class="mini-avatar">DO</span>Daniel Osei</div></td><td>IT Infrastructure</td><td>Server Rooms</td><td><span class="status ok">Active</span></td></tr>
+                    <tr><td><div class="user-pill"><span class="mini-avatar">MK</span>Marta Kowalski</div></td><td>HR</td><td>Restricted</td><td><span class="status warn">Review</span></td></tr>
+                    <tr><td><div class="user-pill"><span class="mini-avatar">JB</span>Jonas Berg</div></td><td>Vendor</td><td>Temporary</td><td><span class="status alert">Expired</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div class="card panel">
+                <div class="panel-header"><h3>Live events</h3><button class="tiny-toggle">Now</button></div>
+                <ul class="event-list">
+                  <li class="event-item"><div class="event-bullet">✓</div><div><strong>Entrance granted</strong><br><span style="color: var(--muted); font-size: 11px;">North tower — Gate 2</span></div><div class="event-time">08:42</div></li>
+                  <li class="event-item"><div class="event-bullet" style="background: rgba(247,199,106,.12); border-color: rgba(247,199,106,.2);">!</div><div><strong>Maintenance alert</strong><br><span style="color: var(--muted); font-size: 11px;">Camera node 12 unstable</span></div><div class="event-time">08:11</div></li>
+                  <li class="event-item"><div class="event-bullet" style="background: rgba(245,106,106,.12); border-color: rgba(245,106,106,.2);">×</div><div><strong>Door held open</strong><br><span style="color: var(--muted); font-size: 11px;">South wing — Bay 3</span></div><div class="event-time">07:49</div></li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="screen" id="mobile-users">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">☰</div><div class="label">Registered Mobile</div><div class="value">1,842</div><div class="inset">+126 this week</div></div>
+              <div class="card stat-card"><div class="icon">✓</div><div class="label">Approved</div><div class="value">1,611</div><div class="inset">87.5% active usage</div></div>
+              <div class="card stat-card"><div class="icon">⚠</div><div class="label">Pending Review</div><div class="value">89</div><div class="inset">7 require escalation</div></div>
+              <div class="card stat-card"><div class="icon">⌁</div><div class="label">Push Sync</div><div class="value">99.2%</div><div class="inset">Stable across zones</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Mobile user directory</h3><button class="button primary">Add Mobile User</button></div>
+              <table>
+                <thead><tr><th>User</th><th>Department</th><th>Device</th><th>Last Sync</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td><div class="user-pill"><span class="mini-avatar">FA</span>Fatima Al-Sayed</div></td><td>Security</td><td>iPhone 15</td><td>Today, 08:14</td><td><span class="status ok">Active</span></td></tr>
+                  <tr><td><div class="user-pill"><span class="mini-avatar">TN</span>Tomas Novak</div></td><td>Product</td><td>Samsung S24</td><td>Today, 07:52</td><td><span class="status ok">Active</span></td></tr>
+                  <tr><td><div class="user-pill"><span class="mini-avatar">SC</span>Sophie Chen</div></td><td>Finance</td><td>Android</td><td>Yesterday</td><td><span class="status warn">Pending</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="access">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">⇄</div><div class="label">Access Policies</div><div class="value">24</div><div class="inset">6 active revisions</div></div>
+              <div class="card stat-card"><div class="icon">◌</div><div class="label">Zones</div><div class="value">19</div><div class="inset">12 secured entry points</div></div>
+              <div class="card stat-card"><div class="icon">▣</div><div class="label">Grant Requests</div><div class="value">44</div><div class="inset">9 pending approval</div></div>
+              <div class="card stat-card"><div class="icon">⚑</div><div class="label">Exceptions</div><div class="value">06</div><div class="inset">2 require review</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Access configuration</h3><button class="button primary">New Policy</button></div>
+              <div class="module-tabs"><button class="module-tab active">Time Code</button><button class="module-tab">Time Zone</button><button class="module-tab">Reader Group</button><button class="module-tab">Access Groups</button><button class="module-tab">Elevator Group</button><button class="module-tab">Multi-Man Access</button></div>
+              <table>
+                <thead><tr><th>Zone</th><th>Role</th><th>Level</th><th>Schedule</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>HQ — North Wing</td><td>Security</td><td>Full Access</td><td>24/7</td><td><span class="status ok">Active</span></td></tr>
+                  <tr><td>Data Center</td><td>IT</td><td>Restricted</td><td>Business Hours</td><td><span class="status ok">Active</span></td></tr>
+                  <tr><td>Parking</td><td>Visitors</td><td>Temporary</td><td>08:00–18:00</td><td><span class="status warn">Review</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="attendance">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">◫</div><div class="label">Present</div><div class="value">3,147</div><div class="inset">91.2% check-in rate</div></div>
+              <div class="card stat-card"><div class="icon">◍</div><div class="label">Late Arrivals</div><div class="value">168</div><div class="inset">+12 vs. previous day</div></div>
+              <div class="card stat-card"><div class="icon">✦</div><div class="label">Overtime</div><div class="value">94 hrs</div><div class="inset">Across 4 departments</div></div>
+              <div class="card stat-card"><div class="icon">▤</div><div class="label">Absences</div><div class="value">54</div><div class="inset">7 approved leave</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Attendance configuration</h3><button class="button primary">New Rule</button></div>
+              <div class="module-tabs"><button class="module-tab active">Attendance Rule</button><button class="module-tab">Rule Group</button><button class="module-tab">Leave Policy</button></div>
+              <table>
+                <thead><tr><th>Employee</th><th>Shift</th><th>Check-in</th><th>Check-out</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td><div class="user-pill"><span class="mini-avatar">AR</span>Amaya Rao</div></td><td>08:00–17:00</td><td>07:58</td><td>16:58</td><td><span class="status ok">On time</span></td></tr>
+                  <tr><td><div class="user-pill"><span class="mini-avatar">DO</span>Daniel Osei</div></td><td>09:00–18:00</td><td>09:18</td><td>18:18</td><td><span class="status warn">Late</span></td></tr>
+                  <tr><td><div class="user-pill"><span class="mini-avatar">MK</span>Marta Kowalski</div></td><td>10:00–19:00</td><td>09:56</td><td>18:55</td><td><span class="status ok">On time</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="visitors">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">◎</div><div class="label">Visitors Today</div><div class="value">312</div><div class="inset">+28 vs. yesterday</div></div>
+              <div class="card stat-card"><div class="icon">✓</div><div class="label">Approved</div><div class="value">287</div><div class="inset">92% disposition rate</div></div>
+              <div class="card stat-card"><div class="icon">⏳</div><div class="label">Waiting</div><div class="value">19</div><div class="inset">7 require escort</div></div>
+              <div class="card stat-card"><div class="icon">⚑</div><div class="label">Flagged</div><div class="value">06</div><div class="inset">1 banned list match</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Visitors</h3><button class="button primary">Pre-Register Visitor</button></div>
+              <div class="module-tabs"><button class="module-tab active">Visitor Details</button><button class="module-tab">Visit Details</button><button class="module-tab">Gate Master</button><button class="module-tab">Visitor Policy</button></div>
+              <table>
+                <thead><tr><th>Name</th><th>Host</th><th>Purpose</th><th>Time</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Charlotte Lee</td><td>Amaya Rao</td><td>Facility Audit</td><td>09:30</td><td><span class="status ok">Approved</span></td></tr>
+                  <tr><td>Ali Rahman</td><td>Daniel Osei</td><td>IT Review</td><td>11:00</td><td><span class="status warn">Pending</span></td></tr>
+                  <tr><td>Rosa Gomez</td><td>Priya Nair</td><td>Executive Visit</td><td>13:15</td><td><span class="status ok">Checked in</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="reports">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">▣</div><div class="label">Daily Reports</div><div class="value">132</div><div class="inset">12 scheduled today</div></div>
+              <div class="card stat-card"><div class="icon">▤</div><div class="label">Compliance</div><div class="value">96.7%</div><div class="inset">Above policy threshold</div></div>
+              <div class="card stat-card"><div class="icon">↯</div><div class="label">Exceptions</div><div class="value">17</div><div class="inset">3 critical</div></div>
+              <div class="card stat-card"><div class="icon">⇩</div><div class="label">Exports</div><div class="value">42</div><div class="inset">Last export 1h ago</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Recent report exports</h3><button class="button">Generate Report</button></div>
+              <table>
+                <thead><tr><th>Report</th><th>Owner</th><th>Range</th><th>Format</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Access Summary</td><td>Priya Nair</td><td>Today</td><td>PDF</td><td><span class="status ok">Ready</span></td></tr>
+                  <tr><td>Visitor Activity</td><td>Security Ops</td><td>Last 7 days</td><td>CSV</td><td><span class="status ok">Ready</span></td></tr>
+                  <tr><td>Alarm Trend</td><td>Control Room</td><td>Last 30 days</td><td>Excel</td><td><span class="status warn">Queued</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="requests">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">✉</div><div class="label">Open Requests</div><div class="value">57</div><div class="inset">13 due today</div></div>
+              <div class="card stat-card"><div class="icon">✓</div><div class="label">Resolved</div><div class="value">364</div><div class="inset">92% SLA hit</div></div>
+              <div class="card stat-card"><div class="icon">⚠</div><div class="label">Escalated</div><div class="value">13</div><div class="inset">2 high priority</div></div>
+              <div class="card stat-card"><div class="icon">◔</div><div class="label">Avg. Time</div><div class="value">2.6h</div><div class="inset">Within target window</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Request queue</h3><button class="button primary">New Request</button></div>
+              <table>
+                <thead><tr><th>ID</th><th>Request</th><th>Owner</th><th>Priority</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>#1042</td><td>Badge reissue</td><td>Daniel Osei</td><td>Medium</td><td><span class="status warn">In progress</span></td></tr>
+                  <tr><td>#1048</td><td>Visitor pass update</td><td>Priya Nair</td><td>High</td><td><span class="status alert">Escalated</span></td></tr>
+                  <tr><td>#1051</td><td>Camera maintenance</td><td>Security Ops</td><td>Low</td><td><span class="status ok">Resolved</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="analytics">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">▣</div><div class="label">Occupancy</div><div class="value">74%</div><div class="inset">Peak at 13:00</div></div>
+              <div class="card stat-card"><div class="icon">↗</div><div class="label">Traffic Lift</div><div class="value">+18.6%</div><div class="inset">vs. prior month</div></div>
+              <div class="card stat-card"><div class="icon">◔</div><div class="label">Operational Load</div><div class="value">68%</div><div class="inset">Within target range</div></div>
+              <div class="card stat-card"><div class="icon">◎</div><div class="label">System Uptime</div><div class="value">99.7%</div><div class="inset">Stable for 31 days</div></div>
+            </div>
+            <div class="card activity-box">
+              <div class="panel-header"><h3>Campus activity</h3><button class="tiny-toggle">Last 7 days</button></div>
+              <div class="bars">
+                <span class="bar" style="height: 38%;"></span>
+                <span class="bar" style="height: 58%;"></span>
+                <span class="bar" style="height: 44%;"></span>
+                <span class="bar" style="height: 68%;"></span>
+                <span class="bar" style="height: 76%;"></span>
+                <span class="bar" style="height: 90%;"></span>
+                <span class="bar" style="height: 82%;"></span>
+              </div>
+              <div class="legend"><span><i class="dot" style="background:#49d1ff"></i> Entry scans</span><span><i class="dot" style="background:#7de4b4"></i> Exits</span><span><i class="dot" style="background:#f7d579"></i> Alerts</span></div>
+            </div>
+          </section>
+
+          <section class="screen" id="cameras">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">◉</div><div class="label">Cameras</div><div class="value">128</div><div class="inset">4 offline</div></div>
+              <div class="card stat-card"><div class="icon">✓</div><div class="label">Recording</div><div class="value">96.4%</div><div class="inset">Good coverage</div></div>
+              <div class="card stat-card"><div class="icon">⚡</div><div class="label">Live Feeds</div><div class="value">24</div><div class="inset">3 in focus mode</div></div>
+              <div class="card stat-card"><div class="icon">⚠</div><div class="label">Alerts</div><div class="value">08</div><div class="inset">2 require review</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Camera health overview</h3><button class="button primary">Add Camera</button></div>
+              <table>
+                <thead><tr><th>Camera</th><th>Zone</th><th>Signal</th><th>Retention</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>CAM-101</td><td>North Gate</td><td>Strong</td><td>30 days</td><td><span class="status ok">Healthy</span></td></tr>
+                  <tr><td>CAM-214</td><td>Data Center</td><td>Moderate</td><td>30 days</td><td><span class="status warn">Review</span></td></tr>
+                  <tr><td>CAM-312</td><td>Parking</td><td>Offline</td><td>—</td><td><span class="status alert">Offline</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="card panel" style="margin-top:18px"><div class="panel-header"><h3>Live camera view</h3><select class="location"><option>All departments</option><option>Canteen</option><option>Security</option><option>Production</option></select></div><div class="camera-grid"><div class="camera-feed"><div class="camera-label">Canteen Entry · CAM-CAN-01</div></div><div class="camera-feed"><div class="camera-label">Security South Door · CAM-SEC-01</div></div><div class="camera-feed"><div class="camera-label">Production North Door · CAM-PRD-01</div></div></div></div>
+          </section>
+
+          <section class="screen" id="controllers">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">⌁</div><div class="label">Controllers</div><div class="value">43</div><div class="inset">3 firmware updates</div></div>
+              <div class="card stat-card"><div class="icon">✓</div><div class="label">Connected</div><div class="value">39</div><div class="inset">90.7% online</div></div>
+              <div class="card stat-card"><div class="icon">⚠</div><div class="label">Warnings</div><div class="value">04</div><div class="inset">2 battery low</div></div>
+              <div class="card stat-card"><div class="icon">↻</div><div class="label">Reboots</div><div class="value">11</div><div class="inset">This month</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Controller fleet</h3><button class="button primary">Register Controller</button></div>
+              <table>
+                <thead><tr><th>ID</th><th>Location</th><th>Type</th><th>Firmware</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>CTRL-021</td><td>HQ — North Wing</td><td>Access</td><td>v4.9.1</td><td><span class="status ok">Online</span></td></tr>
+                  <tr><td>CTRL-043</td><td>South Wing</td><td>Alarm</td><td>v4.9.0</td><td><span class="status warn">Update</span></td></tr>
+                  <tr><td>CTRL-071</td><td>Parking</td><td>Barrier</td><td>v4.8.6</td><td><span class="status alert">Offline</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="alarms">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">⚠</div><div class="label">Open Alarms</div><div class="value">12</div><div class="inset">3 require escalation</div></div>
+              <div class="card stat-card"><div class="icon">✓</div><div class="label">Resolved</div><div class="value">94</div><div class="inset">This week</div></div>
+              <div class="card stat-card"><div class="icon">✦</div><div class="label">Critical</div><div class="value">02</div><div class="inset">1 fire panel</div></div>
+              <div class="card stat-card"><div class="icon">▣</div><div class="label">SLA</div><div class="value">97%</div><div class="inset">Within target</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Alarm log</h3><button class="button primary">New Alarm Class</button></div>
+              <table>
+                <thead><tr><th>Alarm</th><th>Zone</th><th>Severity</th><th>Assigned</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Door forced open</td><td>South Wing</td><td>High</td><td>Security Ops</td><td><span class="status warn">Investigating</span></td></tr>
+                  <tr><td>Motion sensor alert</td><td>Parking</td><td>Medium</td><td>Night Shift</td><td><span class="status ok">Cleared</span></td></tr>
+                  <tr><td>Fire panel drift</td><td>Server Room</td><td>Critical</td><td>Facilities Lead</td><td><span class="status alert">Escalated</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="settings">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">⚙</div><div class="label">System Configs</div><div class="value">134</div><div class="inset">18 updated this month</div></div>
+              <div class="card stat-card"><div class="icon">🔒</div><div class="label">Security Patches</div><div class="value">11</div><div class="inset">2 due this week</div></div>
+              <div class="card stat-card"><div class="icon">◎</div><div class="label">Policy Pack</div><div class="value">06</div><div class="inset">Current approved set</div></div>
+              <div class="card stat-card"><div class="icon">⌁</div><div class="label">Integrations</div><div class="value">19</div><div class="inset">4 active syncs</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Configuration overview</h3><button class="button primary">New Privilege</button></div>
+              <table>
+                <thead><tr><th>Privilege</th><th>Type</th><th>Modules</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>Super Admin</td><td>General</td><td>All</td><td><span class="status ok">Active</span></td></tr>
+                  <tr><td>Security Operator</td><td>General</td><td>Monitoring, Alarms</td><td><span class="status ok">Active</span></td></tr>
+                  <tr><td>HR Administrator</td><td>General</td><td>Users, Attendance</td><td><span class="status ok">Active</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="screen" id="credentials">
+            <div class="stats-grid">
+              <div class="card stat-card"><div class="icon">▣</div><div class="label">Active Cards</div><div class="value">4,821</div><div class="inset">98.2% assigned</div></div>
+              <div class="card stat-card"><div class="icon">⌁</div><div class="label">Biometrics</div><div class="value">3,406</div><div class="inset">Enrollment complete</div></div>
+              <div class="card stat-card"><div class="icon">▤</div><div class="label">Dynamic QR</div><div class="value">218</div><div class="inset">Temporary credentials</div></div>
+              <div class="card stat-card"><div class="icon">⚠</div><div class="label">Expiring Soon</div><div class="value">17</div><div class="inset">Requires renewal</div></div>
+            </div>
+            <div class="card panel">
+              <div class="panel-header"><h3>Credential management</h3><button class="button primary">Issue Credential</button></div>
+              <div class="module-tabs"><button class="module-tab active">Cards</button><button class="module-tab">Biometrics</button><button class="module-tab">Dynamic QR</button><button class="module-tab">Vehicle Tags</button><button class="module-tab">Last Card Action</button></div>
+              <table><thead><tr><th>Card Number</th><th>User</th><th>Credential Type</th><th>Format</th><th>Issued</th><th>Expiry</th><th>Status</th></tr></thead><tbody>
+                <tr><td>88231198</td><td>Amaya Rao</td><td>Default</td><td>MIFARE DESFire EV2</td><td>2022-03-14</td><td>Never</td><td><span class="status ok">Active</span></td></tr>
+                <tr><td>88231204</td><td>Daniel Osei</td><td>Default</td><td>MIFARE DESFire EV2</td><td>2021-07-01</td><td>Never</td><td><span class="status ok">Active</span></td></tr>
+                <tr><td>91004432</td><td>Jonas Berg</td><td>Contractor</td><td>HID Prox</td><td>2026-06-01</td><td>2026-09-30</td><td><span class="status ok">Active</span></td></tr>
+                <tr><td>88230877</td><td>Liam Chen</td><td>Default</td><td>MIFARE DESFire EV2</td><td>2019-05-18</td><td>Never</td><td><span class="status alert">Suspended</span></td></tr>
+              </tbody></table>
+            </div>
+          </section>
+
+          <section class="screen" id="areas">
+            <div class="card panel"><div class="panel-header"><h3>Areas & occupancy</h3><button class="tiny-toggle">HQ — North Wing</button></div><div class="grid" style="margin-top:0"><div class="map"><span class="map-pin" style="left:18%;top:28%"></span><span class="map-pin" style="left:46%;top:40%;background:var(--amber)"></span><span class="map-pin" style="left:72%;top:24%;background:var(--red)"></span><span class="map-pin" style="left:62%;top:70%"></span><span class="map-pin" style="left:30%;top:76%"></span></div><div><div class="requirement"><strong>Server Room A <span class="status warn" style="float:right">Real (Hard)</span></strong><span>2 / 8 occupants · anti-passback enforced</span></div><div class="requirement" style="margin-top:10px"><strong>R&amp;D Lab Zone <span class="status ok" style="float:right">Real (Soft)</span></strong><span>5 / 12 occupants · warning threshold active</span></div><div class="requirement" style="margin-top:10px"><strong>Main Lobby <span class="status ok" style="float:right">Timed</span></strong><span>18 / 88 occupants · timed occupancy control</span></div></div></div></div>
+            <div class="grid"><div class="card panel"><div class="panel-header"><h3>Anti-passback configuration</h3><button class="button primary">Save Changes</button></div><div class="form-strip"><select><option>Server Room A — In</option></select><select><option>Hard response</option><option>Soft response</option></select><input value="30 seconds" aria-label="timeout" /><button class="button primary">Apply</button></div></div><div class="card panel"><div class="panel-header"><h3>Occupancy policy</h3><span class="status ok">Healthy</span></div><p class="inset">Real, timed, and air-lock controls are synchronized with the access controller fleet.</p></div></div>
+          </section>
+
+          <section class="screen" id="logical-areas">
+            <div class="card panel"><div class="panel-header"><h3>Who's where</h3><button class="button">Export Occupancy</button></div><input class="search" style="width:330px;max-width:100%;margin-bottom:14px" placeholder="Search by area or user..." /><div class="stats-grid" style="margin-bottom:0"><div class="requirement"><strong>Server Room A</strong><div class="value" style="font-size:22px">2</div><span>Daniel Osei, Fatima Al-Sayed</span></div><div class="requirement"><strong>R&amp;D Lab Zone</strong><div class="value" style="font-size:22px">5</div><span>Sofia Herrera, +4 more</span></div><div class="requirement"><strong>Main Lobby</strong><div class="value" style="font-size:22px">18</div><span>18 employees, 1 visitor</span></div><div class="requirement"><strong>East Annex Floor 2</strong><div class="value" style="font-size:22px">7</div><span>7 employees</span></div><div class="requirement"><strong>Loading Dock</strong><div class="value" style="font-size:22px">3</div><span>Jonas Berg, +2 contractors</span></div><div class="requirement"><strong>NOC</strong><div class="value" style="font-size:22px">1</div><span>Daniel Osei</span></div></div></div>
+          </section>
+
+          <section class="screen" id="monitoring">
+            <div class="card panel"><div class="panel-header"><h3>Live security operations console</h3><span class="status ok">System healthy</span></div><div class="form-strip"><button class="button" style="border-color:rgba(245,106,106,.4);color:#fca5a5">Evacuation</button><button class="button" style="border-color:rgba(245,106,106,.4);color:#fca5a5">Lockdown</button><button class="button">Maintenance</button><button class="button">Reset</button><select style="margin-left:auto"><option>Scope: Branch — HQ North Wing</option><option>Scope: All branches</option></select></div><div class="grid"><div><div class="panel-header"><h3>Facility map</h3></div><div class="map"><span class="map-pin" style="left:18%;top:28%"></span><span class="map-pin" style="left:42%;top:22%;background:var(--red)"></span><span class="map-pin" style="left:65%;top:38%;background:var(--amber)"></span><span class="map-pin" style="left:30%;top:62%"></span><span class="map-pin" style="left:76%;top:68%"></span></div></div><div><div class="panel-header"><h3>Device status</h3></div><table><tbody><tr><td>Controllers</td><td><span class="status ok">38/40 online</span></td></tr><tr><td>Interfaces</td><td><span class="status ok">12/12 online</span></td></tr><tr><td>Readers</td><td><span class="status warn">64/66 online</span></td></tr><tr><td>Inputs</td><td><span class="status warn">44/48 online</span></td></tr><tr><td>Outputs</td><td><span class="status ok">48/48 online</span></td></tr></tbody></table></div></div></div>
+          </section>
+
+          <section class="screen" id="zone-draw">
+            <div class="card panel"><div class="panel-header"><h3>Zone draw</h3><button class="button primary">Save Zone</button></div><p class="inset">Define a visual zone boundary for camera and logical-area monitoring.</p><div class="map" style="min-height:390px"><span class="map-pin" style="left:16%;top:20%"></span><span class="map-pin" style="left:70%;top:20%;background:var(--amber)"></span><span class="map-pin" style="left:78%;top:70%;background:var(--red)"></span><span class="map-pin" style="left:24%;top:76%"></span><div style="position:absolute;left:16%;top:20%;width:54%;height:56%;border:2px solid var(--cyan);background:rgba(47,225,210,.08);transform:skew(-8deg)"></div><span style="position:absolute;left:20%;top:25%;font-size:11px;color:var(--cyan);font-weight:700">NORTH WING RESTRICTED ZONE</span></div></div>
+          </section>
+
+          <section class="screen" id="requirements">
+            <div class="card panel"><div class="panel-header"><h3>Cross-cutting platform requirements</h3><button class="button primary">Save Changes</button></div><div class="grid" style="margin-top:0"><div><div class="panel-header"><h3>Denial reason taxonomy</h3></div><table><thead><tr><th>Code</th><th>Reason</th></tr></thead><tbody><tr><td>DEN—01</td><td>Expired Credential</td></tr><tr><td>DEN—02</td><td>Outside Schedule</td></tr><tr><td>DEN—03</td><td>Occupancy Limit Reached</td></tr><tr><td>DEN—04</td><td>Anti-Passback Violation</td></tr><tr><td>DEN—05</td><td>Multi-Man Incomplete</td></tr><tr><td>DEN—06</td><td>Watchlist Match</td></tr></tbody></table></div><div><div class="panel-header"><h3>Door hardware classification</h3></div><div class="requirement-list" style="grid-template-columns:1fr"><div class="requirement"><strong>Main Lobby N</strong><span>Fail-Safe — unlocks on power loss</span><button class="button primary" style="margin-top:8px">Fail-Safe</button></div><div class="requirement"><strong>Server Room A</strong><span>Fail-Secure — stays locked on power loss</span><button class="button" style="margin-top:8px">Fail-Secure</button></div><div class="requirement"><strong>Stairwell Egress — East</strong><span>Fail-Safe — unlocks on power loss</span><button class="button primary" style="margin-top:8px">Fail-Safe</button></div></div></div></div><div class="requirement" style="margin-top:14px;border-color:rgba(247,199,106,.35);background:rgba(247,199,106,.06)"><strong>Bulk change preview <span class="status warn" style="float:right">34 records affected</span></strong><span>Reassigning “Facilities — Standard” to “Facilities — Extended Hours” affects 34 users. 2 records with manual overrides will be skipped.</span><div style="margin-top:10px"><button class="button">Cancel</button> <button class="button primary">Apply to 32 Records</button></div></div></div>
+          </section>
+
+          <div class="footer-note">Client preview • HRS Tech Security Platform • aligned to demo workflow</div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const pageTabs = document.querySelectorAll('.page-tab');
+      const navItems = document.querySelectorAll('.nav-item[data-target]');
+      const screens = document.querySelectorAll('.screen');
+
+      function showPage(id) {
+        screens.forEach(s => s.classList.toggle('active', s.id === id));
+        pageTabs.forEach(tab => tab.classList.toggle('active', tab.dataset.page === id));
+        navItems.forEach(item => item.classList.toggle('active', item.dataset.target === id));
+      }
+
+      pageTabs.forEach(tab => tab.addEventListener('click', () => showPage(tab.dataset.page)));
+      navItems.forEach(item => item.addEventListener('click', () => showPage(item.dataset.target)));
+    </script>
+  </body>
+</html>

@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HRS Tech Security Platform</title>
+    <style>
+      :root {
+        --bg: #09131d;
+        --bg-2: #0d1823;
+        --surface: #111f2d;
+        --surface-2: #0d1a27;
+        --surface-3: #142738;
+        --border: rgba(148, 163, 184, 0.16);
+        --text: #e5edf7;
+        --muted: #8aa0b8;
+        --muted-2: #688299;
+        --cyan: #2fe1d2;
+        --cyan-2: #20b7aa;
+        --blue: #4ea4ff;
+        --green: #3ad29d;
+        --amber: #f7c76a;
+        --red: #f56a6a;
+        --shadow: 0 14px 32px rgba(2, 6, 23, 0.35);
+      }
+
+      * { box-sizing: border-box; }
+
+      html, body {
+        margin: 0;
+        background: linear-gradient(180deg, #08141d 0%, #0d1a27 100%);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", Arial, sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+      }
+
+      .page {
+        display: flex;
+        min-height: 100vh;
+        background: #0a1623;
+      }
+
+      .sidebar {
+        width: 232px;
+        background: #0b1421;
+        border-right: 1px solid var(--border);
+        padding: 12px 10px 14px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 8px 8px 18px;
+        padding: 6px 4px;
+      }
+
+      .brand-mark {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #1a6af2, #1bc4d0);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: white;
+      }
+
+      .brand-name {
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+      }
+
+      .brand-sub {
+        display: block;
+        margin-top: 3px;
+        font-size: 8px;
+        letter-spacing: 0.12em;
+        color: var(--muted-2);
+      }
+
+      .nav-group {
+        margin-top: 18px;
+      }
+
+      .nav-label {
+        padding: 0 12px;
+        font-size: 9px;
+        font-weight: 700;
+        letter-spacing: 0.16em;
+        color: #5a7188;
+        text-transform: uppercase;
+      }
+
+      .nav-list {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0;
+      }
+
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 10px;
+        margin: 2px 4px;
+        border-radius: 5px;
+        color: #a9bbce;
+        font-size: 11px;
+        border: 1px solid transparent;
+      }
+
+      .nav-item.active {
+        background: rgba(9, 106, 102, 0.38);
+        border-color: rgba(32, 183, 170, 0.25);
+        color: #25e0c7;
+        box-shadow: inset 2px 0 0 #20d7be;
+      }
+
+      .nav-item.warning {
+        background: rgba(255, 88, 88, 0.06);
+      }
+
+      .nav-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+        background: rgba(148, 163, 184, 0.2);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .nav-item.active .nav-dot { background: rgba(47, 225, 210, 0.2); }
+
+      .nav-badge {
+        margin-left: auto;
+        background: rgba(249, 113, 113, 0.12);
+        color: #fca5a5;
+        border-radius: 9px;
+        font-size: 9px;
+        padding: 2px 6px;
+      }
+
+      .user-card {
+        margin-top: 30px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(17, 30, 46, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 10px 12px;
+      }
+
+      .avatar-mini {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(34, 211, 238, 0.18);
+        border: 1px solid rgba(34, 211, 238, 0.35);
+        color: #7dd3fc;
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+
+      .user-card strong {
+        display: block;
+        font-size: 11px;
+      }
+
+      .user-card span {
+        display: block;
+        font-size: 9px;
+        color: var(--muted-2);
+      }
+
+      .content {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 56px;
+        padding: 0 18px 0 20px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(11, 20, 33, 0.96);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .search {
+        width: min(480px, 42vw);
+        height: 32px;
+        border-radius: 4px;
+        border: 1px solid var(--border);
+        background: #111f2d;
+        color: var(--text);
+        padding: 0 12px;
+        font-size: 11px;
+      }
+
+      .toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .location {
+        height: 32px;
+        border-radius: 5px;
+        border: 1px solid var(--border);
+        background: #111f2d;
+        color: #d3dfed;
+        padding: 0 30px 0 12px;
+        font-size: 10px;
+      }
+
+      .badge-tag {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 24px;
+        padding: 0 10px;
+        border-radius: 4px;
+        background: rgba(24, 212, 188, 0.12);
+        color: #25e0c7;
+        font-size: 9px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+      }
+
+      .main {
+        padding: 22px;
+      }
+
+      .headline-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .headline h1 {
+        margin: 0;
+        font-size: 20px;
+        letter-spacing: -0.02em;
+      }
+
+      .headline p {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .header-actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .button {
+        border: 1px solid var(--border);
+        background: rgba(17, 31, 45, 0.9);
+        color: var(--text);
+        padding: 8px 12px;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+
+      .button.primary {
+        background: linear-gradient(135deg, #0c6c9d, #0d8e8d);
+        border-color: rgba(94, 234, 212, 0.3);
+        color: white;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+      }
+
+      .card {
+        background: linear-gradient(180deg, rgba(15, 27, 39, 0.98), rgba(12, 21, 31, 0.98));
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .stat-card {
+        padding: 14px 16px 12px;
+        min-height: 92px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .stat-card .icon {
+        position: absolute;
+        right: -8px;
+        top: -8px;
+        font-size: 60px;
+        color: rgba(148, 163, 184, 0.08);
+      }
+
+      .label {
+        font-size: 9px;
+        color: var(--muted-2);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+
+      .value {
+        margin-top: 12px;
+        font-size: 24px;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+      }
+
+      .inset {
+        color: var(--muted);
+        font-size: 10px;
+        margin-top: 8px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.7fr 1fr;
+        gap: 18px;
+        margin-top: 18px;
+      }
+
+      .panel {
+        padding: 16px 16px 12px;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+      }
+
+      .panel-header h3 {
+        margin: 0;
+        font-size: 13px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .tiny-toggle {
+        font-size: 10px;
+        color: var(--muted);
+        background: rgba(148, 163, 184, 0.06);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 4px 8px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 11px;
+      }
+
+      th, td {
+        padding: 10px 8px;
+        text-align: left;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      }
+
+      th {
+        color: var(--muted-2);
+        font-weight: 600;
+        font-size: 9px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      td {
+        color: #dfeaf7;
+      }
+
+      .user-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mini-avatar {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(34,211,238,0.2), rgba(59,130,246,0.2));
+        border: 1px solid rgba(56,189,248,0.25);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 9px;
+        color: #d4faff;
+      }
+
+      .status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 999px;
+        font-size: 9px;
+        font-weight: 700;
+      }
+
+      .status.ok {
+        background: rgba(58, 210, 157, 0.12);
+        color: #7de4b4;
+      }
+
+      .status.warn {
+        background: rgba(247, 199, 106, 0.12);
+        color: #f7c76a;
+      }
+
+      .status.alert {
+        background: rgba(245, 106, 106, 0.12);
+        color: #f8a0a0;
+      }
+
+      .event-list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .event-item {
+        display: grid;
+        grid-template-columns: 28px 1fr auto;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+      }
+
+      .event-bullet {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        background: rgba(59,130,246,0.12);
+        border: 1px solid rgba(96,165,250,0.2);
+      }
+
+      .event-time {
+        color: var(--muted-2);
+        font-size: 10px;
+      }
+
+      .activity-box {
+        padding: 16px;
+      }
+
+      .bars {
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        height: 140px;
+        margin-top: 18px;
+        padding-top: 10px;
+      }
+
+      .bar {
+        flex: 1;
+        border-radius: 8px 8px 4px 4px;
+        background: linear-gradient(180deg, #49d1ff 0%, #1b7ce4 100%);
+        opacity: 0.9;
+        min-height: 30px;
+      }
+
+      .bar:nth-child(2n) {
+        background: linear-gradient(180deg, #7de4b4 0%, #1ba17b 100%);
+      }
+
+      .bar:nth-child(3n) {
+        background: linear-gradient(180deg, #f7d579 0%, #d98f30 100%);
+      }
+
+      .legend {
+        margin-top: 14px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        color: var(--muted);
+        font-size: 10px;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .footer-note {
+        margin-top: 20px;
+        color: var(--muted);
+        font-size: 10px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      @media (max-width: 980px) {
+        .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .grid { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 740px) {
+        .page { display: block; }
+        .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+        .content { width: 100%; }
+        .stats-grid { grid-template-columns: 1fr; }
+        .headline-row { flex-direction: column; align-items: flex-start; gap: 12px; }
+        .toolbar { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">H</div>
+          <div>
+            <div class="brand-name">HRS TECH</div>
+            <span class="brand-sub">SECURITY PLATFORM</span>
+          </div>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">HRS Tech View</div>
+          <ul class="nav-list">
+            <li class="nav-item active"><span class="nav-dot"></span> User Management</li>
+            <li class="nav-item"><span class="nav-dot"></span> Mobile Users</li>
+            <li class="nav-item"><span class="nav-dot"></span> Credential Management</li>
+            <li class="nav-item"><span class="nav-dot"></span> Access Management</li>
+            <li class="nav-item"><span class="nav-dot"></span> Attendance Management</li>
+            <li class="nav-item"><span class="nav-dot"></span> Visitor Management</li>
+            <li class="nav-item"><span class="nav-dot"></span> Reports</li>
+            <li class="nav-item"><span class="nav-dot"></span> Requests</li>
+            <li class="nav-item"><span class="nav-dot"></span> Dashboard Analytics</li>
+            <li class="nav-item"><span class="nav-dot"></span> Settings</li>
+          </ul>
+        </div>
+
+        <div class="nav-group">
+          <div class="nav-label">Security View</div>
+          <ul class="nav-list">
+            <li class="nav-item"><span class="nav-dot"></span> Real-Time Monitoring</li>
+            <li class="nav-item"><span class="nav-dot"></span> Camera</li>
+            <li class="nav-item"><span class="nav-dot"></span> Controller Management</li>
+            <li class="nav-item"><span class="nav-dot"></span> Area Control</li>
+            <li class="nav-item"><span class="nav-dot"></span> Logical Area Control</li>
+            <li class="nav-item warning"><span class="nav-dot"></span> Alarm Management <span class="nav-badge">3</span></li>
+          </ul>
+        </div>
+
+        <div class="user-card">
+          <div class="avatar-mini">PN</div>
+          <div>
+            <strong>Priya Nair</strong>
+            <span>Platform Administrator</span>
+          </div>
+        </div>
+      </aside>
+
+      <div class="content">
+        <header class="topbar">
+          <input class="search" value="Search users, credentials, devices, reports..." aria-label="Search" />
+          <div class="toolbar">
+            <select class="location" aria-label="Location">
+              <option>HQ — North Wing</option>
+              <option>HQ — South Wing</option>
+              <option>HQ — East Wing</option>
+            </select>
+            <span class="badge-tag">PROTOTYPE</span>
+            <span class="badge-tag" style="background: rgba(59,130,246,0.12); color: #93c5fd;">WIREFRAME</span>
+          </div>
+        </header>
+
+        <main class="main">
+          <div class="headline-row">
+            <div class="headline">
+              <h1>Security Operations Dashboard</h1>
+              <p>Enterprise access, identity, and monitoring overview</p>
+            </div>
+            <div class="header-actions">
+              <button class="button">Export Report</button>
+              <button class="button primary">New Entry</button>
+            </div>
+          </div>
+
+          <section class="stats-grid">
+            <div class="card stat-card">
+              <div class="icon">◔</div>
+              <div class="label">Active Users</div>
+              <div class="value">8.4K</div>
+              <div class="inset">+4.2% compared with last week</div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="icon">◷</div>
+              <div class="label">Access Events</div>
+              <div class="value">24.9K</div>
+              <div class="inset">2.3% below expected peak load</div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="icon">◫</div>
+              <div class="label">Open Alarms</div>
+              <div class="value">12</div>
+              <div class="inset">3 require escalation today</div>
+            </div>
+
+            <div class="card stat-card">
+              <div class="icon">◎</div>
+              <div class="label">Camera Health</div>
+              <div class="value">96.4%</div>
+              <div class="inset">14 devices under scheduled maintenance</div>
+            </div>
+          </section>
+
+          <section class="grid">
+            <div class="card panel">
+              <div class="panel-header">
+                <h3>Access roster</h3>
+                <button class="tiny-toggle">Today</button>
+              </div>
+
+              <table>
+                <thead>
+                  <tr>
+                    <th>Member</th>
+                    <th>Department</th>
+                    <th>Access</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>
+                      <div class="user-pill">
+                        <span class="mini-avatar">AR</span>
+                        Amaya Rao
+                      </div>
+                    </td>
+                    <td>Facilities</td>
+                    <td>Full Access</td>
+                    <td><span class="status ok">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-pill">
+                        <span class="mini-avatar">DO</span>
+                        Daniel Osei
+                      </div>
+                    </td>
+                    <td>IT Infrastructure</td>
+                    <td>Server Rooms</td>
+                    <td><span class="status ok">Active</span></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-pill">
+                        <span class="mini-avatar">MK</span>
+                        Marta Kowalski
+                      </div>
+                    </td>
+                    <td>HR</td>
+                    <td>Restricted</td>
+                    <td><span class="status warn">Review</span></td>
+                  </tr>
+                  <tr>
+                    <td>
+                      <div class="user-pill">
+                        <span class="mini-avatar">JB</span>
+                        Jonas Berg
+                      </div>
+                    </td>
+                    <td>Vendor</td>
+                    <td>Temporary</td>
+                    <td><span class="status alert">Expired</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card panel">
+              <div class="panel-header">
+                <h3>Live events</h3>
+                <button class="tiny-toggle">Now</button>
+              </div>
+
+              <ul class="event-list">
+                <li class="event-item">
+                  <div class="event-bullet">✓</div>
+                  <div>
+                    <strong>Entrance granted</strong><br />
+                    <span style="color: var(--muted); font-size: 11px;">North tower — Gate 2</span>
+                  </div>
+                  <div class="event-time">08:42</div>
+                </li>
+                <li class="event-item">
+                  <div class="event-bullet" style="background: rgba(247, 199, 106, 0.12); border-color: rgba(247,199,106,0.2);">!</div>
+                  <div>
+                    <strong>Maintenance alert</strong><br />
+                    <span style="color: var(--muted); font-size: 11px;">Camera node 12 unstable</span>
+                  </div>
+                  <div class="event-time">08:11</div>
+                </li>
+                <li class="event-item">
+                  <div class="event-bullet" style="background: rgba(245,106,106,0.12); border-color: rgba(245,106,106,0.2);">×</div>
+                  <div>
+                    <strong>Door held open</strong><br />
+                    <span style="color: var(--muted); font-size: 11px;">South wing — Bay 3</span>
+                  </div>
+                  <div class="event-time">07:49</div>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section class="grid">
+            <div class="card activity-box">
+              <div class="panel-header">
+                <h3>Campus activity</h3>
+                <button class="tiny-toggle">Last 7 days</button>
+              </div>
+
+              <div class="bars" aria-label="Chart">
+                <span class="bar" style="height: 38%;"></span>
+                <span class="bar" style="height: 58%;"></span>
+                <span class="bar" style="height: 44%;"></span>
+                <span class="bar" style="height: 68%;"></span>
+                <span class="bar" style="height: 76%;"></span>
+                <span class="bar" style="height: 90%;"></span>
+                <span class="bar" style="height: 82%;"></span>
+              </div>
+
+              <div class="legend">
+                <span><i class="dot" style="background:#49d1ff"></i> Entry scans</span>
+                <span><i class="dot" style="background:#7de4b4"></i> Exits</span>
+                <span><i class="dot" style="background:#f7d579"></i> Alerts</span>
+              </div>
+            </div>
+
+            <div class="card panel">
+              <div class="panel-header">
+                <h3>Priority actions</h3>
+                <button class="tiny-toggle">3 items</button>
+              </div>
+
+              <ul class="event-list">
+                <li class="event-item">
+                  <div class="event-bullet" style="background: rgba(247,199,106,0.12); border-color: rgba(247,199,106,0.2);">!</div>
+                  <div>
+                    <strong>Review contractor badges</strong><br />
+                    <span style="color: var(--muted); font-size: 11px;">2 credentials expiring in 24h</span>
+                  </div>
+                </li>
+                <li class="event-item">
+                  <div class="event-bullet" style="background: rgba(96,165,250,0.12); border-color: rgba(96,165,250,0.2);">↻</div>
+                  <div>
+                    <strong>Reset access policy</strong><br />
+                    <span style="color: var(--muted); font-size: 11px;">Facilities — east wing</span>
+                  </div>
+                </li>
+                <li class="event-item">
+                  <div class="event-bullet" style="background: rgba(58,210,157,0.12); border-color: rgba(58,210,157,0.2);">✓</div>
+                  <div>
+                    <strong>New visitor approvals</strong><br />
+                    <span style="color: var(--muted); font-size: 11px;">14 requests ready for confirmation</span>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <div class="footer-note">Client preview • HRS Tech Security Platform</div>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

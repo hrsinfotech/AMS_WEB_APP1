@@ -1,5 +1,17 @@
 const { app, BrowserWindow, shell } = require("electron");
+const { spawn } = require("node:child_process");
 const path = require("node:path");
+
+let composeProcess;
+
+function startRuntime() {
+  const runtimePath = path.join(process.resourcesPath, "runtime");
+  composeProcess = spawn("docker", ["compose", "up", "-d", "--build"], {
+    cwd: runtimePath,
+    windowsHide: true,
+    stdio: "ignore",
+  });
+}
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -24,6 +36,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  startRuntime();
   createWindow();
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
