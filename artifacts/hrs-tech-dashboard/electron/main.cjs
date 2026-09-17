@@ -58,7 +58,13 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  window.loadFile(path.join(__dirname, "..", "dist", "public", "index.html"));
+  const entrypoint = path.join(__dirname, "..", "dist", "public", "index.html");
+  window.webContents.on("did-fail-load", (_event, errorCode, errorDescription) => {
+    dialog.showErrorBox("Unable to load dashboard", `${errorDescription} (${errorCode})\n\n${entrypoint}`);
+  });
+  window.loadFile(entrypoint).catch((error) => {
+    dialog.showErrorBox("Unable to load dashboard", `${error.message}\n\n${entrypoint}`);
+  });
 }
 
 app.whenReady().then(() => {
